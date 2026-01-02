@@ -1,4 +1,3 @@
-from .models import Account, AccountStatus, AccountType, CompanySize
+from .account import Account, AccountStatus, AccountType, CompanySize
 
 __all__ = ["Account", "AccountStatus", "AccountType", "CompanySize"]
-
