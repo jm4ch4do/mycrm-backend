@@ -1,0 +1,17 @@
+[MASTER]
+load-plugins = pylint_django
+init-hook = 'import sys, os; sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))); os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mycrm.settings")'
+ignore = myenv, migrations, manage.py
+
+[MESSAGES CONTROL]
+disable =
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+
+[FORMAT]
+max-line-length = 100
+
+[TYPECHECK]
+ignored-modules = django
+generated-members = objects, DoesNotExist
