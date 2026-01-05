@@ -3,6 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from core.managers import AccountManager
+
 
 class AccountStatus(models.TextChoices):
     """Status choices for Account."""
@@ -108,6 +110,9 @@ class Account(models.Model):
     shipping_state = models.CharField(max_length=100, blank=True, null=True)
     shipping_country = models.CharField(max_length=100, blank=True, null=True)
     shipping_postal_code = models.CharField(max_length=20, blank=True, null=True)
+
+    # Custom Manager
+    objects = AccountManager()
 
     class Meta:
         ordering = ["-created_at"]
