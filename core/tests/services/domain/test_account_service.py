@@ -49,7 +49,7 @@ class TestAccountService:
         ):
             AccountService.create_account(data, test_user)
 
-    def test_update_account_sets_updated_by(self, test_user, test_user_2, account):
+    def test_update_account_sets_updated_by(self, test_user_2, account):
         """Test that update_account sets updated_by to the provided user."""
         data = {"name": "Updated Account"}
 

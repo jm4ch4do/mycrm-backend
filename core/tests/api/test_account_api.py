@@ -1,6 +1,7 @@
 """API tests for Account endpoints."""
 from decimal import Decimal
 from typing import Optional
+import uuid
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -189,7 +190,6 @@ class TestAccountRetrieve:
 
     def test_retrieve_nonexistent_account_returns_404(self):
         """Test GET /accounts/{id} with invalid id returns 404."""
-        import uuid
         fake_uuid = str(uuid.uuid4())
         response = self.client.get(f'/accounts/{fake_uuid}/', format='json')
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -427,7 +427,7 @@ class TestAccountDelete:
 
 
 @pytest.mark.django_db
-class TestAccountAuth:
+class TestAccountAuth:  # pylint: disable=too-few-public-methods
     """Tests for Account API authentication and authorization."""
 
     def test_unauthenticated_cannot_access_accounts(self):

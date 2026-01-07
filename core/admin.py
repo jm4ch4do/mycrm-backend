@@ -12,7 +12,9 @@ class AccountAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
     fieldsets = (
         ("Identity", {"fields": ("id", "name", "account_number", "status", "type")}),
-        ("Business Info", {"fields": ("industry", "company_size", "annual_revenue", "website", "description")}),
+        ("Business Info",
+            {"fields": ("industry", "company_size", "annual_revenue", "website", "description")}
+        ),
         ("Ownership", {"fields": ("owner_user", "created_by", "updated_by")}),
         ("Addresses", {
             "classes": ("collapse",),

@@ -6,9 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 
 class CurrentUserView(views.APIView):
     """Get information about the currently authenticated user."""
-    
+
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         """Return current user information."""
         user = request.user

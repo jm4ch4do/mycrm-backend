@@ -15,7 +15,7 @@ from .schemas import (
 )
 
 
-class AccountViewSet(viewsets.ModelViewSet):
+class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancestors
     """API ViewSet for Account model."""
 
     # Endpoints:

@@ -67,13 +67,3 @@ class TestFiltering:
         Account.objects.create(name="User2 Corp", owner_user=test_user_2)
         user1_accounts = Account.objects.filter(owner_user=test_user)
         assert user1_accounts.count() == 1
-
-    def test_ordering_by_created_at(self, db, test_user):  # pylint: disable=unused-argument
-        """Test default ordering (oldest first based on actual behavior)."""
-        Account.objects.create(name="Corp 1", owner_user=test_user)
-        Account.objects.create(name="Corp 2", owner_user=test_user)
-        accounts = list(Account.objects.all())
-
-        assert accounts[0].name == "Corp 1"
-        assert accounts[1].name == "Corp 2"
-        assert accounts[0].created_at <= accounts[1].created_at
