@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from core.models import Account
 
@@ -13,6 +14,16 @@ if TYPE_CHECKING:
 
 class AccountService:
     """Service layer for Account business logic."""
+
+    @staticmethod
+    def list_accounts() -> Any:
+        """Retrieve all accounts."""
+        return Account.objects.all()
+
+    @staticmethod
+    def get_account(account_id: str) -> Account:
+        """Retrieve a single account by ID."""
+        return get_object_or_404(Account, id=account_id)
 
     @staticmethod
     @transaction.atomic
