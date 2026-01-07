@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema
 
 from core.api.serializers import AccountSerializer
 from core.models import Account
+from core.permissions import IsAccountOwnerOrAdmin
 from core.services.domain.account_service import AccountService
 
 from .pagination import AccountPagination
@@ -26,6 +27,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    permission_classes = [IsAccountOwnerOrAdmin]
     pagination_class = AccountPagination
     filter_backends = [
         DjangoFilterBackend,
