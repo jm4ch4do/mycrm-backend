@@ -8,6 +8,9 @@ disable =
     C0114,  # missing-module-docstring
     C0115,  # missing-class-docstring
     C0116,  # missing-function-docstring
+    unused-argument,
+    trailing-whitespace,
+    E1102,  # given is not callable
 
 [FORMAT]
 max-line-length = 100
