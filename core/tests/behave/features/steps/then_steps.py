@@ -6,23 +6,31 @@ from behave import then
 from core.models import Account
 
 
-@then("the response should contain {count:d} accounts")
-def step_verify_account_count(context, count):
-    """Verify the number of accounts in the response."""
+@then('the response status code is "{status_code}"')
+@then('the response status code is "{status_code}" and contains "{count}" records')
+def step_verify_status_code(context, status_code, count=None):
+    """Verify the response status code and optionally the number of records."""
+    status_code = int(status_code)
+
     assert (
-        context.response.status_code == 200
-    ), f"Expected 200, got {context.response.status_code}"
+        context.response.status_code == status_code
+    ), f"Expected {status_code}, got {context.response.status_code}"
 
-    # Handle both list and paginated responses
-    if isinstance(context.response_data, dict) and "results" in context.response_data:
-        actual_count = len(context.response_data["results"])
-    else:
-        actual_count = len(context.response_data)
+    if count is not None:
+        count = int(count)
+        # Handle both list and paginated responses
+        if (
+            isinstance(context.response_data, dict)
+            and "results" in context.response_data
+        ):
+            actual_count = len(context.response_data["results"])
+        else:
+            actual_count = len(context.response_data)
 
-    assert actual_count == count, f"Expected {count} accounts, got {actual_count}"
+        assert actual_count == count, f"Expected {count} records, got {actual_count}"
 
 
-@then("the response should include the following accounts")
+@then("the response contains")
 def step_verify_accounts_in_response(context):
     """Verify that specific accounts are in the response."""
     # Handle both list and paginated responses
