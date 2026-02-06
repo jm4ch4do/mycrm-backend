@@ -4,8 +4,11 @@ When steps for API requests and entity operations.
 
 import json
 from behave import when
+from django.apps import apps
 import utils as _sutils
 from core.models import Account
+from steps.constants import ENTITY_CONFIG
+from steps.utils import normalize_entity_name
 
 
 @when('I send a "{method}" request to "{endpoint}"')
@@ -82,11 +85,24 @@ def step_update_account_status(context, account_name, new_status):
     _sutils.response_to_context(context, response)
 
 
-@when('I request details for account "{account_name}"')
-def step_request_account_details(context, account_name):
-    """Request details for a specific account."""
-    # Find the account by name
-    account = Account.objects.get(name=account_name)
+@when('I request details for "{entity}" with "{field}" "{value}"')
+def step_request_entity_details(context, entity, field, value):
+    """Request details for a specific entity by field value."""
+    entity = normalize_entity_name(entity)
 
-    response = context.client.get(f"/accounts/{account.id}/")
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unknown entity type: {entity}")
+
+    config = ENTITY_CONFIG[entity]
+    endpoint = config["endpoint"]
+
+    # Get the model dynamically
+    model_name = entity.rstrip("s").capitalize()  # accounts -> Account
+    model = apps.get_model("core", model_name)
+
+    # Find the entity by field
+    lookup = {field: value}
+    instance = model.objects.get(**lookup)
+
+    response = context.client.get(f"{endpoint}{instance.id}/")
     _sutils.response_to_context(context, response)

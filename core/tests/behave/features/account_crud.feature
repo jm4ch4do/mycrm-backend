@@ -31,10 +31,10 @@ Feature: Account CRUD Operations
             | status | eq       | active |
 
         Then the response status code is "200" and contains "1" records
-        And the first account should have name "Active Co"
+        And the first "account" should have name "Active Co"
 
     Scenario: Update account status
-        Given I create "accounts" through the API
+        Given I create an "account" through the API
             | name      |
             | Test Corp |
 
@@ -43,18 +43,18 @@ Feature: Account CRUD Operations
         Then the account "Test Corp" should have status "active"
 
     Scenario: Retrieve single account details
-        Given I create "accounts" through the API
+        Given I create "account" through the API
             | name        | status | type     | owner_username | industry | website             |
             | Detail Corp | active | customer | testuser1      | Software | https://example.com |
 
-        When I request details for account "Detail Corp"
+        When I request details for "account" with "name" "Detail Corp"
 
         Then the response should contain account details
             | name        | status | type     | industry | website             |
             | Detail Corp | active | customer | Software | https://example.com |
 
     Scenario: Create multiple accounts with defaults
-        Given I generate "100" "accounts" through the API
+        Given I generate "100" "account" through the API
 
         When I send a "GET" request to "/accounts/?page_size=100"
 

@@ -6,6 +6,29 @@ import json
 from urllib.parse import urlencode
 
 
+# Special pluralization rules for entity names
+PLURALIZATION_RULES = {
+    # Add special cases here where simple 's' addition doesn't work
+    # e.g., "person": "people", "child": "children"
+}
+
+
+def normalize_entity_name(entity_name):
+    """Normalize entity name to plural form for use in ENTITY_CONFIG."""
+    entity_lower = entity_name.lower()
+
+    # Check if it's a special case
+    if entity_lower in PLURALIZATION_RULES:
+        return PLURALIZATION_RULES[entity_lower]
+
+    # If already ends with 's', assume it's plural
+    if entity_lower.endswith("s"):
+        return entity_lower
+
+    # Simple pluralization: add 's'
+    return entity_lower + "s"
+
+
 def parse_literal(value):
     """Parse string values to appropriate Python types."""
     if not value:

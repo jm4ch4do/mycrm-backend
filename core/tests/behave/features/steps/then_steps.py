@@ -4,6 +4,7 @@ Then steps for verifying responses and entity states.
 
 from behave import then
 from core.models import Account
+from steps.utils import normalize_entity_name
 
 
 @then('the response status code is "{status_code}"')
@@ -53,20 +54,22 @@ def step_verify_accounts_in_response(context):
         assert found, f"Account not found in response: {expected}"
 
 
-@then('the first account should have name "{expected_name}"')
-def step_verify_first_account_name(context, expected_name):
-    """Verify the name of the first account."""
+@then('the first "{entity}" should have {field} "{expected_value}"')
+def step_verify_first_entity_field(context, entity, field, expected_value):
+    """Verify a field value of the first entity in the response."""
+    entity = normalize_entity_name(entity)
+
     # Handle both list and paginated responses
     if isinstance(context.response_data, dict) and "results" in context.response_data:
-        accounts = context.response_data["results"]
+        items = context.response_data["results"]
     else:
-        accounts = context.response_data
+        items = context.response_data
 
-    assert len(accounts) > 0, "No accounts in response"
-    actual_name = accounts[0]["name"]
+    assert len(items) > 0, f"No {entity} in response"
+    actual_value = items[0][field]
     assert (
-        actual_name == expected_name
-    ), f"Expected name '{expected_name}', got '{actual_name}'"
+        actual_value == expected_value
+    ), f"Expected {field}='{expected_value}', got '{actual_value}'"
 
 
 @then('the account "{account_name}" should have status "{expected_status}"')

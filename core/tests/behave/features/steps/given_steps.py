@@ -6,13 +6,18 @@ import json
 from behave import given
 from django.contrib.auth import get_user_model
 from steps.constants import ENTITY_CONFIG
+from steps.utils import normalize_entity_name
 
 User = get_user_model()
 
 
 @given('I create "{entity}" through the API')
+@given('I create a "{entity}" through the API')
+@given('I create an "{entity}" through the API')
 def step_create_entities(context, entity):
     """Create entities through the Django test client."""
+    entity = normalize_entity_name(entity)
+
     if entity not in ENTITY_CONFIG:
         raise ValueError(f"Unknown entity type: {entity}. Add it to ENTITY_CONFIG.")
 
@@ -59,6 +64,8 @@ def step_create_entities(context, entity):
 @given('I generate "{count}" "{entity}" through the API')
 def step_generate_multiple_entities(context, count, entity):
     """Generate multiple entities with auto-generated defaults."""
+    entity = normalize_entity_name(entity)
+
     if entity not in ENTITY_CONFIG:
         raise ValueError(f"Unknown entity type: {entity}. Add it to ENTITY_CONFIG.")
 

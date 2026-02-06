@@ -37,7 +37,17 @@ def clear_test_data():
 
     # Second pass: Now clear Users after all dependent objects are deleted
     user_model = get_user_model()
-    user_model.objects.all().delete()
+    users_to_preserve = ["admin", "tester"]
+
+    all_users = user_model.objects.all()
+    for user in all_users:
+        should_delete = True
+        for excluded in users_to_preserve:
+            if excluded.lower() in user.username.lower():
+                should_delete = False
+                break
+        if should_delete:
+            user.delete()
 
 
 def before_scenario(context, scenario):
