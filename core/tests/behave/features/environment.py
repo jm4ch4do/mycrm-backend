@@ -9,6 +9,7 @@ import setup  # pylint: disable=unused-import
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.test import Client
 
 
 def clear_test_data():
@@ -40,15 +41,21 @@ def clear_test_data():
 
 
 def before_scenario(context, scenario):
-    """
-    Set up before each scenario.
-    Called before each scenario is run.
-    """
+    """Set up before each scenario. Called before each scenario is run."""
     clear_test_data()
+
+    # Create a default test user available for all scenarios
+    user_model = get_user_model()
+    context.test_user = user_model.objects.create_user(
+        username="testuser",
+        email="testuser@example.com",
+        password=None,  # No password needed since we use force_login in tests
+        is_staff=True,
+    )
+
+    context.users = {"testuser": context.test_user}
+    context.client = Client()
 
 
 def after_scenario(context, scenario):
-    """
-    Clean up after each scenario.
-    Called after each scenario is run.
-    """
+    """Clean up after each scenario. Called after each scenario is run."""

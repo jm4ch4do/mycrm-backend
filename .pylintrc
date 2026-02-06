@@ -11,6 +11,7 @@ disable =
     unused-argument,
     trailing-whitespace,
     E1102,  # given is not callable
+    E1101,  # no-member (behave step files have special import context)
 
 [FORMAT]
 max-line-length = 100

@@ -10,7 +10,7 @@ Feature: Account CRUD Operations
             | Tech Solutions | active   | partner  | testuser1      |
             | Global Trade   | inactive | vendor   | testuser2      |
 
-        When I request all accounts from the API
+        When I send a "GET" request to "/accounts/"
 
         Then the response should contain 3 accounts
         And the response should include the following accounts
@@ -26,7 +26,9 @@ Feature: Account CRUD Operations
             | Prospect Co | prospect | customer | testuser1      |
             | Lost Co     | lost     | customer | testuser1      |
 
-        When I request accounts with status "active"
+        When I send a "GET" request to "/accounts/"
+            | field  | operator | value  |
+            | status | eq       | active |
 
         Then the response should contain 1 accounts
         And the first account should have name "Active Co"
