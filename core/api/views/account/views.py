@@ -1,18 +1,16 @@
-from rest_framework import viewsets, status, filters
-from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from core.api.serializers import AccountSerializer
+from core.api.serializers import AccountSerializer, ContactSerializer
 from core.models import Account
 from core.permissions import IsAccountOwnerOrAdmin
 from core.services.domain.account_service import AccountService
 
 from .pagination import AccountPagination
-from .schemas import (
-    CREATE_ACCOUNT_EXAMPLES,
-    UPDATE_ACCOUNT_EXAMPLES
-)
+from .schemas import CREATE_ACCOUNT_EXAMPLES, UPDATE_ACCOUNT_EXAMPLES
 
 
 class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancestors
@@ -32,20 +30,19 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
-        filters.OrderingFilter
+        filters.OrderingFilter,
     ]
-    filterset_fields = [
-        'status', 'type', 'company_size', 'owner_user'
-    ]
-    search_fields = [
-        'name', 'industry', 'account_number'
-    ]
-    ordering_fields = [
-        'name', 'created_at', 'updated_at', 'annual_revenue'
-    ]
-    ordering = ['-created_at']
+    filterset_fields = ["status", "type", "company_size", "owner_user"]
+    search_fields = ["name", "industry", "account_number"]
+    ordering_fields = ["name", "created_at", "updated_at", "annual_revenue"]
+    ordering = ["-created_at"]
     allowed_actions = [
-        'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'
+        "list",
+        "retrieve",
+        "create",
+        "update",
+        "partial_update",
+        "destroy",
     ]
 
     # ===== Endpoint Definitions =====
@@ -56,6 +53,14 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
         AccountService.soft_delete_account(instance, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=["get"], url_path="contacts")
+    def contacts(self, request, pk=None):
+        """List all contacts for this account."""
+        account = self.get_object()
+        contacts = account.contacts.all()
+        serializer = ContactSerializer(contacts, many=True)
+        return Response(serializer.data)
+
     # ===== Query Methods =====
 
     def get_queryset(self):
@@ -64,34 +69,34 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
 
     def get_object(self):
         """Delegate object retrieval to service."""
-        return AccountService.get_account(self.kwargs['pk'])
+        return AccountService.get_account(self.kwargs["pk"])
 
     # ===== Persistence Methods =====
 
     def perform_create(self, serializer):
         """Delegate account creation to service."""
-        AccountService.create_account(
-            serializer.validated_data, self.request.user
-        )
+        AccountService.create_account(serializer.validated_data, self.request.user)
 
     def perform_update(self, serializer):
         """Delegate account update to service."""
         AccountService.update_account(
-            serializer.instance,
-            serializer.validated_data,
-            self.request.user
+            serializer.instance, serializer.validated_data, self.request.user
         )
 
 
-
-
 # Set docstrings for all action methods
-AccountViewSet.list.__doc__ = "List all accounts with filtering, searching, and pagination."
+AccountViewSet.list.__doc__ = (
+    "List all accounts with filtering, searching, and pagination."
+)
 AccountViewSet.create.__doc__ = "Create a new account."
 AccountViewSet.retrieve.__doc__ = "Retrieve a specific account."
 AccountViewSet.update.__doc__ = "Update an account (full update)."
 AccountViewSet.partial_update.__doc__ = "Partial update an account."
 
 # Apply decorators for methods with examples
-AccountViewSet.create = extend_schema(examples=CREATE_ACCOUNT_EXAMPLES)(AccountViewSet.create)
-AccountViewSet.update = extend_schema(examples=UPDATE_ACCOUNT_EXAMPLES)(AccountViewSet.update)
+AccountViewSet.create = extend_schema(examples=CREATE_ACCOUNT_EXAMPLES)(
+    AccountViewSet.create
+)
+AccountViewSet.update = extend_schema(examples=UPDATE_ACCOUNT_EXAMPLES)(
+    AccountViewSet.update
+)
