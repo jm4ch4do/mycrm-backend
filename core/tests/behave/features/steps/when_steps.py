@@ -5,10 +5,12 @@ When steps for API requests and entity operations.
 import json
 from behave import when
 from django.apps import apps
+
 import utils as _sutils
-from core.models import Account
 from steps.constants import ENTITY_CONFIG
-from steps.utils import normalize_entity_name
+from steps.utils import normalize_entity_name, resolve_foreign_key_pattern
+
+from core.models import Account
 
 
 @when('I send a "{method}" request to "{endpoint}"')
@@ -105,4 +107,31 @@ def step_request_entity_details(context, entity, field, value):
     instance = model.objects.get(**lookup)
 
     response = context.client.get(f"{endpoint}{instance.id}/")
+    _sutils.response_to_context(context, response)
+
+
+@when('I request details for "{entity}" by "{field}" "{value}"')
+def step_request_entities_by_field(context, entity, field, value):
+    """Request entities filtered by a field value using pattern resolution."""
+    entity = normalize_entity_name(entity)
+
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unknown entity type: {entity}")
+
+    # Use the shared pattern resolution utility
+    resolution = resolve_foreign_key_pattern(field, value)
+
+    if not resolution:
+        raise ValueError(
+            f"Field '{field}' must match pattern {{entity}}_id or {{entity}}_id_from_{{field}}"
+        )
+
+    entity_name, object_id = resolution
+
+    # Build the query with the ID
+    config = ENTITY_CONFIG[entity]
+    endpoint = config["endpoint"]
+
+    # Filter by the entity field (e.g., ?account={uuid})
+    response = context.client.get(f"{endpoint}?{entity_name}={object_id}")
     _sutils.response_to_context(context, response)

@@ -11,6 +11,8 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client
 
+from core.models import Contact
+
 
 def clear_test_data():
     """
@@ -27,12 +29,17 @@ def clear_test_data():
         "MigrationRecorder",
     ]
 
+    # First pass: Delete models with foreign keys to avoid PROTECT constraint violations
+    # Order matters here - delete child entities before parents
+    Contact.objects.all().delete()
+
     # Get all models from all apps
     all_models = apps.get_models()
 
     for model in all_models:
         model_name = model.__name__
-        if model_name not in to_preserve and model_name != "User":
+        # Skip models we've already handled and preserved models
+        if model_name not in to_preserve and model_name not in ["User", "Contact"]:
             model.objects.all().delete()
 
     # Second pass: Now clear Users after all dependent objects are deleted

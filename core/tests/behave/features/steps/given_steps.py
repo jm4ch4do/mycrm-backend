@@ -35,7 +35,7 @@ def step_create_entities(context, entity):
     for row in context.table:
         # Apply defaults to row data
         row_data = {key: value for key, value in row.items()}
-        complete_data = defaults_class.get_defaults(row_data)
+        complete_data = defaults_class.prepare_entity_data(row_data)
         owner_username = complete_data.pop("owner_username", None)
 
         # Get or create user for entity ownership
@@ -62,7 +62,8 @@ def step_create_entities(context, entity):
 
 
 @given('I generate "{count}" "{entity}" through the API')
-def step_generate_multiple_entities(context, count, entity):
+@given('I generate "{count}" "{entity}" with "{field}" "{value}" through the API')
+def step_generate_multiple_entities(context, count, entity, field=None, value=None):
     """Generate multiple entities with auto-generated defaults."""
     entity = normalize_entity_name(entity)
 
@@ -89,7 +90,10 @@ def step_generate_multiple_entities(context, count, entity):
 
     for _ in range(count):
         # Use all defaults (empty row data)
-        complete_data = defaults_class.get_defaults({})
+        row_data = {}
+        if field:
+            row_data[field] = value
+        complete_data = defaults_class.prepare_entity_data(row_data)
         complete_data.pop("owner_username", None)
 
         # Create entity via API

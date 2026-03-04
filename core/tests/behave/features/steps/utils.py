@@ -3,7 +3,9 @@ Common utility functions for all behave steps.
 """
 
 import json
+import re
 from urllib.parse import urlencode
+from django.apps import apps
 
 
 # Special pluralization rules for entity names
@@ -41,6 +43,71 @@ def parse_literal(value):
     if lowered == "null" or lowered == "none":
         return None
     return value
+
+
+def resolve_foreign_key_pattern(field_name, value):
+    """
+    Resolve foreign key references using two patterns:
+
+    Pattern 1: {entity}_id_from_{field}
+        Example: account_id_from_name = "Acme Corp"
+        Looks up Account by name="Acme Corp"
+
+    Pattern 2: {entity}_id (assumes lookup by field='name')
+        Example: account_id = "Acme Corp"
+        Looks up Account by name="Acme Corp"
+
+    Args:
+        field_name: Field name following the pattern
+        value: Value to look up
+
+    Returns:
+        tuple: (entity_name, object_id) where object_id is a string UUID
+        None: if the field doesn't match any pattern
+
+    Raises:
+        ValueError: If model not found or lookup fails
+    """
+    # Pattern 1: {entity}_id_from_{lookup_field}
+    pattern_1 = re.compile(r"^(.+?)_id_from_(.+)$")
+    # Pattern 2: {entity}_id (defaults to 'name' lookup)
+    pattern_2 = re.compile(r"^(.+?)_id$")
+
+    match = pattern_1.match(field_name)
+    if match:
+        entity_name = match.group(1)  # e.g., "account"
+        lookup_field = match.group(2)  # e.g., "name"
+    else:
+        match = pattern_2.match(field_name)
+        if match:
+            entity_name = match.group(1)  # e.g., "account"
+            lookup_field = "name"  # Default lookup by 'name'
+        else:
+            # No pattern match
+            return None
+
+    # Convert entity name to model name (account -> Account)
+    model_name = entity_name.capitalize()
+
+    try:
+        # Get the model class
+        model = apps.get_model("core", model_name)
+
+        # Look up the object
+        lookup = {lookup_field: value}
+        obj = model.objects.get(**lookup)
+
+        # Return entity name and object ID
+        return (entity_name, str(obj.id))
+
+    except LookupError as exc:
+        raise ValueError(
+            f"Model '{model_name}' not found for pattern '{field_name}'"
+        ) from exc
+    except model.DoesNotExist as exc:
+        raise ValueError(
+            f"{model_name} with {lookup_field}='{value}' does not exist"
+        ) from exc
 
 
 def build_url_with_query_params(endpoint, context):
