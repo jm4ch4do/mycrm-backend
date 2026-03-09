@@ -60,7 +60,9 @@ class ContactViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
 
     def get_object(self):
         """Delegate object retrieval to service."""
-        return ContactService.get_contact(self.kwargs["pk"])
+        obj = ContactService.get_contact(self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     # ===== Persistence Methods =====
 

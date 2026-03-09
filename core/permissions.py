@@ -27,16 +27,16 @@ class IsAccountOwnerOrAdmin(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """
         Allow object access only to:
-        - Owners (for safe methods and modifications)
-        - Admins (for any operation)
+        - All authenticated users (for safe methods)
+        - Owners and admins (for modifications)
         """
         # Admins always have permission
         if request.user and request.user.is_staff:
             return True
 
-        # Safe methods (GET, HEAD, OPTIONS) - allow owner
+        # Safe methods (GET, HEAD, OPTIONS) - allow all authenticated users
         if request.method in permissions.SAFE_METHODS:
-            return obj.owner_user == request.user
+            return True
 
         # Modification methods (PUT, PATCH, DELETE) - allow owner only
         return obj.owner_user == request.user
@@ -68,16 +68,16 @@ class IsContactOwnerOrAdmin(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         """
         Allow object access only to:
-        - Owners (for safe methods and modifications)
-        - Admins (for any operation)
+        - All authenticated users (for safe methods)
+        - Owners and admins (for modifications)
         """
         # Admins always have permission
         if request.user and request.user.is_staff:
             return True
 
-        # Safe methods (GET, HEAD, OPTIONS) - allow owner
+        # Safe methods (GET, HEAD, OPTIONS) - allow all authenticated users
         if request.method in permissions.SAFE_METHODS:
-            return obj.owner_user == request.user
+            return True
 
         # Modification methods (PUT, PATCH, DELETE) - allow owner only
         return obj.owner_user == request.user

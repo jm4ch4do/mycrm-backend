@@ -69,7 +69,9 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
 
     def get_object(self):
         """Delegate object retrieval to service."""
-        return AccountService.get_account(self.kwargs["pk"])
+        obj = AccountService.get_account(self.kwargs["pk"])
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     # ===== Persistence Methods =====
 
