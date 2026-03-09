@@ -18,8 +18,8 @@ class AccountService:
 
     @staticmethod
     def list_accounts() -> Any:
-        """Retrieve all accounts."""
-        return Account.objects.all()
+        """Retrieve all active accounts."""
+        return Account.objects.filter(is_invalid=False)
 
     @staticmethod
     def get_account(account_id: str) -> Account:

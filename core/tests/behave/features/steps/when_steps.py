@@ -3,7 +3,7 @@ When steps for API requests and entity operations.
 """
 
 import json
-from behave import when
+from behave import given, when
 from django.apps import apps
 
 import utils as _sutils
@@ -73,7 +73,15 @@ def step_send_request_to_endpoint(context, method, endpoint):
 
 @when('I update the account "{account_name}" status to "{new_status}"')
 def step_update_account_status(context, account_name, new_status):
-    """Update an account's status."""
+    """
+    Update an account's status field by looking it up by name.
+
+    This is a convenience step for a common account operation. For generic
+    entity updates, prefer the 'I update "{entity}"' step instead.
+
+    Example:
+        When I update the account "Acme Corp" status to "inactive"
+    """
     # Find the account by name
     account = Account.objects.get(name=account_name)
 
@@ -89,7 +97,17 @@ def step_update_account_status(context, account_name, new_status):
 
 @when('I request details for "{entity}" with "{field}" "{value}"')
 def step_request_entity_details(context, entity, field, value):
-    """Request details for a specific entity by field value."""
+    """
+    Request details for a single entity by looking it up via a unique field.
+
+    Looks up the entity in the database by the given field/value, then sends
+    a GET request to its detail endpoint (e.g. /accounts/{id}/).
+
+    Examples:
+        When I request details for "accounts" with "name" "Acme Corp"
+        When I request details for "deals" with "name" "Enterprise License"
+        When I request details for "contacts" with "email" "john@acme.com"
+    """
     entity = normalize_entity_name(entity)
 
     if entity not in ENTITY_CONFIG:
@@ -112,7 +130,21 @@ def step_request_entity_details(context, entity, field, value):
 
 @when('I request details for "{entity}" by "{field}" "{value}"')
 def step_request_entities_by_field(context, entity, field, value):
-    """Request entities filtered by a field value using pattern resolution."""
+    """
+    Request a filtered list of entities by a foreign key relationship.
+
+    Uses the FK pattern resolution to translate field/value into a query
+    parameter. The field must follow one of these patterns:
+        - {entity}_id            — looks up the related entity by "name"
+        - {entity}_id_from_{fld} — looks up the related entity by "{fld}"
+
+    Examples:
+        When I request details for "contacts" by "account_id" "Acme Corp"
+            -> resolves to GET /contacts/?account={uuid-of-acme}
+
+        When I request details for "deals" by "account_id_from_name" "Acme Corp"
+            -> resolves to GET /deals/?account={uuid-of-acme}
+    """
     entity = normalize_entity_name(entity)
 
     if entity not in ENTITY_CONFIG:
@@ -134,4 +166,73 @@ def step_request_entities_by_field(context, entity, field, value):
 
     # Filter by the entity field (e.g., ?account={uuid})
     response = context.client.get(f"{endpoint}?{entity_name}={object_id}")
+    _sutils.response_to_context(context, response)
+
+
+@when('I update "{entity}" with "{field}" "{value}"')
+def step_update_entity(context, entity, field, value):
+    """
+    Update an entity identified by field/value with data from a table row.
+
+    Looks up the entity by the given field, then sends a PATCH request with
+    the key/value pairs from the first row of the data table.
+
+    Example:
+        When I update "deals" with "name" "Enterprise License"
+            | stage       | amount    |
+            | negotiation | 150000.00 |
+
+        When I update "accounts" with "name" "Acme Corp"
+            | status   |
+            | inactive |
+    """
+    entity = normalize_entity_name(entity)
+
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unknown entity type: {entity}")
+
+    config = ENTITY_CONFIG[entity]
+    endpoint = config["endpoint"]
+
+    model_name = entity.rstrip("s").capitalize()
+    model = apps.get_model("core", model_name)
+
+    instance = model.objects.get(**{field: value})
+    update_data = dict(context.table[0].items())
+
+    response = context.client.patch(
+        f"{endpoint}{instance.id}/",
+        data=json.dumps(update_data),
+        content_type="application/json",
+    )
+    _sutils.response_to_context(context, response)
+
+
+@when('I soft delete "{entity}" with "{field}" "{value}"')
+def step_soft_delete_entity(context, entity, field, value):
+    """
+    Soft delete an entity identified by a unique field/value.
+
+    Sends a DELETE request to the entity's detail endpoint. The API is
+    expected to set is_invalid=True rather than physically removing the record.
+
+    Examples:
+        When I soft delete "deals" with "name" "Old Deal"
+        When I soft delete "accounts" with "name" "Defunct Corp"
+        When I soft delete "contacts" with "email" "former@acme.com"
+    """
+    entity = normalize_entity_name(entity)
+
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unknown entity type: {entity}")
+
+    config = ENTITY_CONFIG[entity]
+    endpoint = config["endpoint"]
+
+    model_name = entity.rstrip("s").capitalize()
+    model = apps.get_model("core", model_name)
+
+    instance = model.objects.get(**{field: value})
+
+    response = context.client.delete(f"{endpoint}{instance.id}/")
     _sutils.response_to_context(context, response)

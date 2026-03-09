@@ -18,8 +18,8 @@ class ContactService:
 
     @staticmethod
     def list_contacts() -> Any:
-        """Retrieve all contacts."""
-        return Contact.objects.all()
+        """Retrieve all active contacts."""
+        return Contact.objects.filter(is_invalid=False)
 
     @staticmethod
     def get_contact(contact_id: str) -> Contact:

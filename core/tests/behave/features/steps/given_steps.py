@@ -15,7 +15,30 @@ User = get_user_model()
 @given('I create a "{entity}" through the API')
 @given('I create an "{entity}" through the API')
 def step_create_entities(context, entity):
-    """Create entities through the Django test client."""
+    """
+    Create one or more entities through the API using a data table.
+
+    Each row in the table becomes a separate POST request. Columns map to
+    entity fields; missing columns are filled with defaults from the entity's
+    defaults class (see entity_defaults.py). Foreign keys use the name-based
+    resolution pattern (e.g. account_id = "Acme Corp").
+
+    An optional "owner_username" column controls which user owns the entity.
+    If omitted, the default test user is used.
+
+    Examples:
+        Given I create "accounts" through the API
+            | name      | status | type     |
+            | Acme Corp | active | customer |
+
+        Given I create "deals" through the API
+            | name              | account_id | stage    | status | amount    | currency |
+            | Enterprise License | Acme Corp  | proposal | open   | 120000.00 | usd      |
+
+        Given I create "contacts" through the API
+            | first_name | last_name | email          | account_id | role           | seniority |
+            | John       | Doe       | john@acme.com  | Acme Corp  | decision_maker | executive |
+    """
     entity = normalize_entity_name(entity)
 
     if entity not in ENTITY_CONFIG:
@@ -64,7 +87,21 @@ def step_create_entities(context, entity):
 @given('I generate "{count}" "{entity}" through the API')
 @given('I generate "{count}" "{entity}" with "{field}" "{value}" through the API')
 def step_generate_multiple_entities(context, count, entity, field=None, value=None):
-    """Generate multiple entities with auto-generated defaults."""
+    """
+    Generate multiple entities with auto-generated default values.
+
+    Creates the specified number of entities, each with a unique set of
+    defaults produced by the entity's defaults class. An optional field/value
+    override can be applied to every generated entity (useful for setting a
+    shared foreign key).
+
+    Examples:
+        Given I generate "50" "contacts" through the API
+
+        Given I generate "10" "deals" with "account_id" "Acme Corp" through the API
+
+        Given I generate "5" "accounts" through the API
+    """
     entity = normalize_entity_name(entity)
 
     if entity not in ENTITY_CONFIG:

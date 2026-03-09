@@ -20,8 +20,8 @@ class DealService:
 
     @staticmethod
     def list_deals() -> Any:
-        """Retrieve all deals."""
-        return Deal.objects.all()
+        """Retrieve all active deals."""
+        return Deal.objects.filter(is_invalid=False)
 
     @staticmethod
     def get_deal(deal_id: str) -> Deal:
