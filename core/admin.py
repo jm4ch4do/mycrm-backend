@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Account, Contact
+from .models import Account, Contact, Deal, DealContactAssoc
 
 
 @admin.register(Account)
@@ -98,3 +98,51 @@ class ContactAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(Deal)
+class DealAdmin(admin.ModelAdmin):
+    """Admin interface for Deal model."""
+
+    list_display = (
+        "name",
+        "account",
+        "stage",
+        "status",
+        "amount",
+        "currency",
+        "owner_user",
+        "created_at",
+    )
+    list_filter = (
+        "stage",
+        "status",
+        "lead_source",
+        "currency",
+        "is_invalid",
+        "created_at",
+    )
+    search_fields = ("name", "loss_reason")
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+    fieldsets = (
+        ("Identity", {"fields": ("id", "name", "account")}),
+        (
+            "Financial",
+            {"fields": ("amount", "currency", "expected_close_date", "probability")},
+        ),
+        ("Pipeline", {"fields": ("stage", "status", "loss_reason")}),
+        ("Source", {"fields": ("lead_source",)}),
+        ("Ownership", {"fields": ("owner_user", "created_by", "updated_by")}),
+        (
+            "Audit",
+            {"fields": ("is_invalid", "closed_at", "created_at", "updated_at")},
+        ),
+    )
+
+
+@admin.register(DealContactAssoc)
+class DealContactAssocAdmin(admin.ModelAdmin):
+    """Admin interface for DealContactAssoc model."""
+
+    list_display = ("deal", "contact", "created_at")
+    readonly_fields = ("created_at",)

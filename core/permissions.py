@@ -81,3 +81,44 @@ class IsContactOwnerOrAdmin(permissions.BasePermission):
 
         # Modification methods (PUT, PATCH, DELETE) - allow owner only
         return obj.owner_user == request.user
+
+
+class IsDealOwnerOrAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow deal owners or admins to modify deals.
+
+    - Admins can always modify
+    - Only deal owners can update/delete their own deals
+    """
+
+    def has_permission(self, request, view):
+        """
+        Allow access to:
+        - List and retrieve operations for all authenticated users
+        - Create operations for all authenticated users
+        - Update and delete only for owners/admins
+        """
+        # Allow GET, HEAD, OPTIONS for all authenticated users
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+
+        # Allow POST, PUT, PATCH, DELETE for authenticated users
+        # (object-level permission will check ownership for modifications)
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Allow object access only to:
+        - All authenticated users (for safe methods)
+        - Owners and admins (for modifications)
+        """
+        # Admins always have permission
+        if request.user and request.user.is_staff:
+            return True
+
+        # Safe methods (GET, HEAD, OPTIONS) - allow all authenticated users
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Modification methods (PUT, PATCH, DELETE) - allow owner only
+        return obj.owner_user == request.user
