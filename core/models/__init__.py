@@ -8,9 +8,23 @@ from .deal import (
     DealStatus,
     LeadSource,
 )
+from .user_profile import UserProfile, UserRole
 
 __all__ = [
-    "Account", "AccountStatus", "AccountType", "CompanySize",
-    "Contact", "ContactRole", "ContactSeniority", "PreferredChannel",
-    "Currency", "Deal", "DealContactAssoc", "DealStage", "DealStatus", "LeadSource",
+    "Account",
+    "AccountStatus",
+    "AccountType",
+    "CompanySize",
+    "Contact",
+    "ContactRole",
+    "ContactSeniority",
+    "PreferredChannel",
+    "Currency",
+    "Deal",
+    "DealContactAssoc",
+    "DealStage",
+    "DealStatus",
+    "LeadSource",
+    "UserProfile",
+    "UserRole",
 ]
