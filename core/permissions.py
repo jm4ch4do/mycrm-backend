@@ -122,3 +122,15 @@ class IsDealOwnerOrAdmin(permissions.BasePermission):
 
         # Modification methods (PUT, PATCH, DELETE) - allow owner only
         return obj.owner_user == request.user
+
+
+class IsStaffOrReadOnly(permissions.BasePermission):
+    """
+    Allow any authenticated user to read.
+    Only staff/admin can perform write operations.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_staff
