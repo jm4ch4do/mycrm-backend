@@ -4,11 +4,88 @@ Given steps for creating entities through the API.
 
 import json
 from behave import given
+from django.apps import apps
 from django.contrib.auth import get_user_model
-from steps.constants import ENTITY_CONFIG
+from steps.domain.constants import ENTITY_CONFIG
 from steps.utils import normalize_entity_name
+from steps.domain.user_steps import create_users_from_table
 
-User = get_user_model()
+user_model = get_user_model()
+
+
+@given('a new "{entity}" is created')
+def step_create_entity_directly(context, entity):
+    """
+    Create a single entity directly in the database from a column-keyed table.
+
+    Table headers are field names; each row creates one object. The value in
+    the first column is used as the context label for that object — stored via
+    setattr() (for URL placeholder resolution) and in context.named_<entity>s
+    (for domain-specific Then steps).
+
+    For 'user' entities, delegates to create_users_from_table() which handles
+    password hashing. All other models use objects.create() directly.
+    Models are resolved from the 'core' app by capitalising the entity name.
+
+    Examples:
+        Given a new "user" is created
+            | username   | password    |
+            | targetuser | testpass123 |
+
+        Given a new "account" is created
+            | name      | status |
+            | Acme Corp | active |
+    """
+    entity_lower = entity.lower()
+
+    if entity_lower == "user":
+        create_users_from_table(context)
+        return
+
+    try:
+        model = apps.get_model("core", entity_lower.capitalize())
+    except LookupError:
+        raise ValueError(
+            f"Unknown entity '{entity}'. Is it registered in the core app?"
+        )
+
+    for row in context.table:
+        data = {key: value for key, value in row.items()}
+        obj = model.objects.create(**data)
+
+        label = data[context.table.headings[0]]
+        setattr(context, label, obj)
+
+        dict_attr = f"named_{entity_lower}s"
+        if not hasattr(context, dict_attr):
+            setattr(context, dict_attr, {})
+        getattr(context, dict_attr)[label] = obj
+
+
+@given('I am "{auth_state}"')
+@given('I am "{auth_state}" as "{auth}"')
+def step_auth(context, auth_state, auth=None):
+    """Unified auth step. Logs out when auth_state is 'not authenticated';
+    logs in when auth_state is 'authenticated' using the auth target."""
+    state = auth_state.strip().lower()
+    if state == "not authenticated":
+        context.client.logout()
+    elif state == "authenticated":
+        target = (auth or "").strip().lower()
+        if target in ("a staff user", "staff user"):
+            user = user_model.objects.create_user(
+                username="behave_staff", password="pass", is_staff=True
+            )
+        elif target in ("a regular user", "regular user"):
+            user = user_model.objects.create_user(
+                username="behave_regular", password="pass"
+            )
+        else:
+            raise ValueError(f"Unknown auth target: '{auth}'")
+        context.client.force_login(user)
+        context.auth_user = user
+    else:
+        raise ValueError(f"Unknown auth state: '{auth_state}'")
 
 
 @given('I create "{entity}" through the API')

@@ -1,16 +1,17 @@
 """Shared pytest fixtures for core app tests."""
+
 import pytest
 from django.contrib.auth import get_user_model
 
 from core.models import Account, AccountStatus, AccountType
 
-User = get_user_model()
+user_model = get_user_model()
 
 
 @pytest.fixture
 def test_user(db):  # pylint: disable=unused-argument
     """Create a test user for account ownership."""
-    return User.objects.create_user(
+    return user_model.objects.create_user(
         username="testuser",
         email="test@example.com",
         password="testpass123",
@@ -20,7 +21,7 @@ def test_user(db):  # pylint: disable=unused-argument
 @pytest.fixture
 def test_user_2(db):  # pylint: disable=unused-argument
     """Create a second test user."""
-    return User.objects.create_user(
+    return user_model.objects.create_user(
         username="testuser2",
         email="test2@example.com",
         password="testpass456",

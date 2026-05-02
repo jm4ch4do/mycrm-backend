@@ -5,9 +5,8 @@ Then steps for verifying responses and entity states.
 from behave import then
 from django.apps import apps
 
-from core.models import Account
-from steps.constants import ENTITY_CONFIG
-from steps.utils import normalize_entity_name
+from steps.domain.constants import ENTITY_CONFIG
+from steps.utils import normalize_entity_name, resolve_model
 
 
 @then('the response status code is "{status_code}"')
@@ -107,23 +106,6 @@ def step_verify_first_entity_field(context, entity, field, expected_value):
     ), f"Expected {field}='{expected_value}', got '{actual_value}'"
 
 
-@then('the account "{account_name}" should have status "{expected_status}"')
-def step_verify_account_status(context, account_name, expected_status):
-    """
-    Verify an account's current status directly in the database.
-
-    This is a convenience step for a common assertion. For generic entity
-    field checks, prefer the 'the "{entity}" with ... should have' step.
-
-    Example:
-        Then the account "Acme Corp" should have status "inactive"
-    """
-    account = Account.objects.get(name=account_name)
-    assert (
-        account.status == expected_status
-    ), f"Expected status '{expected_status}', got '{account.status}'"
-
-
 @then("the response should contain account details")
 def step_verify_account_details(context):
     """
@@ -166,12 +148,34 @@ def step_verify_entity_field_value(
     """
     entity = normalize_entity_name(entity)
 
-    model_name = entity.rstrip("s").capitalize()
-    model = apps.get_model("core", model_name)
+    model = resolve_model(entity)
 
     instance = model.objects.get(**{field: value})
     actual = str(getattr(instance, check_field))
     assert actual == expected, f"Expected {check_field}='{expected}', got '{actual}'"
+
+
+@then('the "{entity}" with "{field}" "{value}" has a related "{related}"')
+def step_verify_entity_has_related(context, entity, field, value, related):
+    """
+    Verify that a related object exists on an entity.
+
+    Looks up the entity by field/value, then asserts that the named related
+    attribute is accessible (i.e. the related object exists).
+
+    Examples:
+        Then the "user" with "username" "roleuser" has a "profile"
+        Then the "account" with "name" "Acme Corp" has a "contacts"
+    """
+    entity = normalize_entity_name(entity)
+    model = resolve_model(entity)
+    instance = model.objects.get(**{field: value})
+    try:
+        related_obj = getattr(instance, related)
+        if hasattr(related_obj, "pk"):
+            assert related_obj.pk is not None, f"'{related}' on {entity} has no pk"
+    except Exception as exc:
+        raise AssertionError(f"'{related}' does not exist on {entity}: {exc}") from exc
 
 
 @then('the "{entity}" with "{field}" "{value}" should not appear in the list')
@@ -201,3 +205,39 @@ def step_verify_entity_not_in_list(context, entity, field, value):
 
     found = any(item.get(field) == value for item in results)
     assert not found, f"{entity} with {field}='{value}' should not appear in the list"
+
+
+@then('the response contains field "{field}"')
+def step_response_contains_field(context, field):
+    """
+    Assert that the response JSON object contains the given top-level field.
+
+    Useful for single-object endpoints (e.g. /me/) where you want to verify a
+    key is present without asserting its value.
+
+    Example:
+        Then the response contains field "role"
+        Then the response contains field "username"
+    """
+    assert (
+        field in context.response_data
+    ), f"Expected field '{field}' in response, got: {list(context.response_data.keys())}"
+
+
+@then('every item in the response has field "{field}"')
+def step_every_item_has_field(context, field):
+    """
+    Assert that every object in a list (or paginated) response has the given field.
+
+    Works with both flat list responses and paginated responses that wrap items
+    in a 'results' key.
+
+    Example:
+        Then every item in the response has field "role"
+        Then every item in the response has field "status"
+    """
+    data = context.response_data
+    items = data["results"] if isinstance(data, dict) and "results" in data else data
+    assert len(items) > 0, "Response contains no items."
+    for item in items:
+        assert field in item, f"Item missing field '{field}': {item}"

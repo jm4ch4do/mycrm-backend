@@ -8,7 +8,7 @@ from behave import given, when
 from django.apps import apps
 
 import utils as _sutils
-from steps.constants import ENTITY_CONFIG
+from steps.domain.constants import ENTITY_CONFIG
 from steps.utils import normalize_entity_name
 
 from core.models import Contact

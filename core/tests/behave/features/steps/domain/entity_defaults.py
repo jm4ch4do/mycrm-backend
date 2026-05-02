@@ -6,7 +6,7 @@ Each entity class provides default values for required fields.
 from django.contrib.auth import get_user_model
 from steps.utils import resolve_foreign_key_pattern
 
-User = get_user_model()
+user_model = get_user_model()
 
 
 class BaseEntityDefaults:
@@ -37,7 +37,7 @@ class BaseEntityDefaults:
             return context.users[owner_username]
 
         # Create new test user with force_login support
-        user = User.objects.create_user(
+        user = user_model.objects.create_user(
             username=owner_username,
             email=f"{owner_username}@example.com",
             password=None,  # Unusable password for force_login

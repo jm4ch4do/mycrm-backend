@@ -6,6 +6,15 @@ import json
 import re
 from urllib.parse import urlencode
 from django.apps import apps
+from django.contrib.auth import get_user_model
+
+
+def resolve_model(entity_name):
+    """Return the model class for a singular entity name (e.g. 'user', 'account')."""
+    name = entity_name.rstrip("s").capitalize()
+    if name.lower() == "user":
+        return get_user_model()
+    return apps.get_model("core", name)
 
 
 # Special pluralization rules for entity names
@@ -108,6 +117,31 @@ def resolve_foreign_key_pattern(field_name, value):
         raise ValueError(
             f"{model_name} with {lookup_field}='{value}' does not exist"
         ) from exc
+
+
+def resolve_url_placeholders(endpoint, context):
+    """
+    Replace ``{varname.attr}`` placeholders in a URL using context attributes.
+
+    For each ``{name.attr}`` token the corresponding object is retrieved via
+    ``getattr(context, name)`` and the placeholder is replaced with
+    ``str(getattr(obj, attr))``.  This is entity-agnostic — any object stored
+    on the behave context can be referenced.
+
+    Example:
+        /users/{targetuser.id}/  →  /users/42/
+        /accounts/{acme.uuid}/   →  /accounts/…/
+
+    Raises:
+        AttributeError: if ``context`` has no attribute ``name``.
+    """
+
+    def _replace(match):
+        name, attr = match.group(1), match.group(2)
+        obj = getattr(context, name)
+        return str(getattr(obj, attr))
+
+    return re.sub(r"\{([^.}]+)\.([^}]+)\}", _replace, endpoint)
 
 
 def build_url_with_query_params(endpoint, context):

@@ -2,7 +2,7 @@
 Constants and configuration for BDD tests.
 """
 
-from steps.entity_defaults import AccountDefaults, ContactDefaults, DealDefaults
+from steps.domain.entity_defaults import AccountDefaults, ContactDefaults, DealDefaults
 
 # Entity mapping: maps entity names to their API endpoints, context attributes, and default handlers
 ENTITY_CONFIG = {

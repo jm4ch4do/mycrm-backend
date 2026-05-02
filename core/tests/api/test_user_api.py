@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 from core.api.serializers.user import CurrentUserSerializer, UserSerializer
 from core.models import UserRole
 
-User = get_user_model()
+user_model = get_user_model()
 
 
 @pytest.mark.django_db
@@ -18,19 +18,19 @@ class TestCurrentUserSerializer:
 
     def test_includes_role_field(self):
         """CurrentUserSerializer output includes role field."""
-        user = User.objects.create_user(username="meuser", password="pass")
+        user = user_model.objects.create_user(username="meuser", password="pass")
         data = CurrentUserSerializer(user).data
         assert "role" in data
 
     def test_role_is_none_when_not_set(self):
         """role is None when the profile has no role assigned."""
-        user = User.objects.create_user(username="menorole", password="pass")
+        user = user_model.objects.create_user(username="menorole", password="pass")
         data = CurrentUserSerializer(user).data
         assert data["role"] is None
 
     def test_role_reflects_profile_value(self):
         """role returns the value set on the UserProfile."""
-        user = User.objects.create_user(username="mewithrole", password="pass")
+        user = user_model.objects.create_user(username="mewithrole", password="pass")
         user.profile.role = UserRole.MANAGER
         user.profile.save()
         data = CurrentUserSerializer(user).data
@@ -43,7 +43,7 @@ class TestUserSerializer:
 
     def test_exposes_required_fields(self):
         """UserSerializer exposes all required fields."""
-        user = User.objects.create_user(
+        user = user_model.objects.create_user(
             username="listuser",
             email="list@example.com",
             first_name="First",
@@ -62,13 +62,13 @@ class TestUserSerializer:
 
     def test_role_is_none_when_not_set(self):
         """role is None when the profile has no role assigned."""
-        user = User.objects.create_user(username="listnorole", password="pass")
+        user = user_model.objects.create_user(username="listnorole", password="pass")
         data = UserSerializer(user).data
         assert data["role"] is None
 
     def test_role_reflects_profile_value(self):
         """role returns the value set on the UserProfile."""
-        user = User.objects.create_user(username="listwithrole", password="pass")
+        user = user_model.objects.create_user(username="listwithrole", password="pass")
         user.profile.role = UserRole.SALES
         user.profile.save()
         data = UserSerializer(user).data
@@ -85,10 +85,12 @@ class TestUserListEndpoint:
 
     def setup_method(self):
         self.client = APIClient()
-        self.staff = User.objects.create_user(
+        self.staff = user_model.objects.create_user(
             username="staffuser", password="pass", is_staff=True
         )
-        self.regular = User.objects.create_user(username="regularuser", password="pass")
+        self.regular = user_model.objects.create_user(
+            username="regularuser", password="pass"
+        )
 
     def test_authenticated_user_can_list_users(self):
         """Any authenticated user can GET /users/."""
@@ -121,10 +123,10 @@ class TestUserRetrieveEndpoint:
 
     def setup_method(self):
         self.client = APIClient()
-        self.staff = User.objects.create_user(
+        self.staff = user_model.objects.create_user(
             username="staffuser2", password="pass", is_staff=True
         )
-        self.regular = User.objects.create_user(
+        self.regular = user_model.objects.create_user(
             username="regularuser2", password="pass"
         )
 
@@ -160,10 +162,10 @@ class TestUserUpdateEndpoint:
 
     def setup_method(self):
         self.client = APIClient()
-        self.staff = User.objects.create_user(
+        self.staff = user_model.objects.create_user(
             username="staffuser3", password="pass", is_staff=True
         )
-        self.regular = User.objects.create_user(
+        self.regular = user_model.objects.create_user(
             username="regularuser3", password="pass"
         )
 

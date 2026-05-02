@@ -7,66 +7,62 @@ from behave import given, when
 from django.apps import apps
 
 import utils as _sutils
-from steps.constants import ENTITY_CONFIG
+from steps.domain.constants import ENTITY_CONFIG
 from steps.utils import normalize_entity_name, resolve_foreign_key_pattern
 
 from core.models import Account
 
 
 @when('I send a "{method}" request to "{endpoint}"')
+@when('I send a "{method}" request to "{endpoint}" with body')
 def step_send_request_to_endpoint(context, method, endpoint):
     """
-    Send an HTTP request to any API endpoint with optional query parameters.
+    Send an HTTP request to any API endpoint.
 
-    This is a generic step that allows calling any endpoint with any HTTP method
-    and supports query parameters via a data table.
-
-    Example without query params:
-        When I send a "GET" request to "/accounts/"
-
-    Example with query params:
+    For GET requests an optional data table supplies query parameters:
         When I send a "GET" request to "/accounts/"
             | field  | operator | value  |
             | status | eq       | active |
 
-    Supported operators:
-        - eq (or equals): equality (default) - translates to ?field=value
-        - ne, lt, gt, lte, gte, in, contains, icontains, startswith, endswith, isnull
-          These use Django's double underscore syntax: ?field__operator=value
-    """
-    # Build the full URL with query parameters
-    full_url = _sutils.build_url_with_query_params(endpoint, context)
+    For POST/PUT/PATCH requests an optional data table supplies the request
+    body as field/value pairs:
+        When I send a "PUT" request to "/users/{targetuser.id}/"
+            | field | value   |
+            | role  | manager |
 
-    # Make the request based on HTTP method
+    Supported query-param operators (GET only):
+        eq (or equals), ne, lt, gt, lte, gte, in, contains, icontains,
+        startswith, endswith, isnull
+    """
+    # Resolve {varname.attr} placeholders (e.g. {targetuser.id} -> 42)
+    endpoint = _sutils.resolve_url_placeholders(endpoint, context)
+
     method = method.upper()
+
     if method == "GET":
+        full_url = _sutils.build_url_with_query_params(endpoint, context)
         response = context.client.get(full_url)
-    elif method == "POST":
-        # For POST, use request body from context if available
-        request_data = getattr(context, "request_data", {})
-        response = context.client.post(
-            full_url,
-            data=json.dumps(request_data) if request_data else None,
-            content_type="application/json",
-        )
-    elif method == "PATCH":
-        request_data = getattr(context, "request_data", {})
-        response = context.client.patch(
-            full_url,
-            data=json.dumps(request_data) if request_data else None,
-            content_type="application/json",
-        )
-    elif method == "PUT":
-        request_data = getattr(context, "request_data", {})
-        response = context.client.put(
-            full_url,
-            data=json.dumps(request_data) if request_data else None,
-            content_type="application/json",
-        )
-    elif method == "DELETE":
-        response = context.client.delete(full_url)
     else:
-        raise ValueError(f"Unsupported HTTP method: {method}")
+        # For write methods, use the step's own table as the request body.
+        if hasattr(context, "table") and context.table:
+            body = {row["field"]: row["value"] for row in context.table}
+        else:
+            body = getattr(context, "request_data", {})
+
+        kwargs = dict(
+            data=json.dumps(body) if body else None,
+            content_type="application/json",
+        )
+        if method == "POST":
+            response = context.client.post(endpoint, **kwargs)
+        elif method == "PUT":
+            response = context.client.put(endpoint, **kwargs)
+        elif method == "PATCH":
+            response = context.client.patch(endpoint, **kwargs)
+        elif method == "DELETE":
+            response = context.client.delete(endpoint)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
 
     _sutils.response_to_context(context, response)
 

@@ -1,6 +1,29 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Account, Contact, Deal, DealContactAssoc
+from .models import Account, Contact, Deal, DealContactAssoc, UserProfile
+
+
+class UserProfileInline(admin.StackedInline):
+    """Inline admin for CRM-specific user profile fields."""
+
+    model = UserProfile
+    fields = ("role",)
+    extra = 0
+
+
+user_model = get_user_model()
+# django.contrib.auth registers User with its built-in UserAdmin at startup.
+# Unregister it first so we can re-register with the extended version below.
+admin.site.unregister(user_model)
+
+
+@admin.register(user_model)
+class UserAdmin(BaseUserAdmin):
+    """Extended User admin with CRM profile inline."""
+
+    inlines = [UserProfileInline]
 
 
 @admin.register(Account)

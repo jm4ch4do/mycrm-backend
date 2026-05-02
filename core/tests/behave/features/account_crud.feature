@@ -34,13 +34,14 @@ Feature: Account CRUD Operations
         And the first "account" should have name "Active Co"
 
     Scenario: Update account status
-        Given I create an "account" through the API
+        Given a new "account" is created
             | name      |
             | Test Corp |
+        And I am "authenticated" as "a staff user"
 
         When I update the account "Test Corp" status to "active"
 
-        Then the account "Test Corp" should have status "active"
+        Then the "account" with "name" "Test Corp" should have "status" "active"
 
     Scenario: Retrieve single account details
         Given I create "account" through the API
