@@ -3,10 +3,13 @@ Then steps for verifying responses and entity states.
 """
 
 from behave import then
-from django.apps import apps
 
 from steps.domain.constants import ENTITY_CONFIG
 from steps.utils import normalize_entity_name, resolve_model
+
+# ---------------------------------------------------------------------------
+# Response status assertions
+# ---------------------------------------------------------------------------
 
 
 @then('the response status code is "{status_code}"')
@@ -42,6 +45,11 @@ def step_verify_status_code(context, status_code, count=None):
             actual_count = len(context.response_data)
 
         assert actual_count == count, f"Expected {count} records, got {actual_count}"
+
+
+# ---------------------------------------------------------------------------
+# Response body assertions
+# ---------------------------------------------------------------------------
 
 
 @then("the response contains")
@@ -106,27 +114,75 @@ def step_verify_first_entity_field(context, entity, field, expected_value):
     ), f"Expected {field}='{expected_value}', got '{actual_value}'"
 
 
-@then("the response should contain account details")
+@then("the response should contain details")
 def step_verify_account_details(context):
     """
     Verify that the response body contains expected key/value pairs.
 
-    Checks each column in the data table against the top-level keys of the
-    response JSON. Intended for single-object detail endpoints.
+    Supports both single-object and list responses:
 
-    Example:
-        Then the response should contain account details
-            | name      | status | type     |
-            | Acme Corp | active | customer |
+    - Single-object (detail endpoint): every table row is checked against
+      the response JSON object directly.
+    - List response (has "results"): each table row must match at least one
+      record in the list. Order of rows does not need to match order of results.
+
+    Examples:
+        Then the response should contain details
+            | name      | status |
+            | Acme Corp | active |
+
+        Then the response should contain details
+            | title          | type    |
+            | Follow up call | call    |
+            | Send proposal  | task    |
     """
     assert context.response.status_code == 200
 
-    for row in context.table:
-        for key, expected_value in row.items():
-            actual_value = context.response_data.get(key)
-            assert (
-                actual_value == expected_value
-            ), f"Expected {key}='{expected_value}', got '{actual_value}'"
+    data = context.response_data
+    records = data.get("results") if isinstance(data, dict) else None
+
+    if records is not None:
+        # List response — each table row must match at least one record (order-independent)
+        for row in context.table:
+            expected = dict(row.items())
+            match = any(
+                all(str(record.get(k)) == v for k, v in expected.items())
+                for record in records
+            )
+            assert match, (
+                f"No record found matching {expected}. "
+                f"Available: {[{k: r.get(k) for k in expected} for r in records]}"
+            )
+    else:
+        # Single-object response — check every row against the response object
+        for row in context.table:
+            for key, expected_value in row.items():
+                actual_value = data.get(key)
+                assert (
+                    actual_value == expected_value
+                ), f"Expected {key}='{expected_value}', got '{actual_value}'"
+
+
+@then('the response contains field "{field}"')
+def step_response_contains_field(context, field):
+    """
+    Assert that the response JSON object contains the given top-level field.
+
+    Useful for single-object endpoints (e.g. /me/) where you want to verify a
+    key is present without asserting its value.
+
+    Example:
+        Then the response contains field "role"
+        Then the response contains field "username"
+    """
+    assert (
+        field in context.response_data
+    ), f"Expected field '{field}' in response, got: {list(context.response_data.keys())}"
+
+
+# ---------------------------------------------------------------------------
+# Database state assertions
+# ---------------------------------------------------------------------------
 
 
 @then(
@@ -205,23 +261,6 @@ def step_verify_entity_not_in_list(context, entity, field, value):
 
     found = any(item.get(field) == value for item in results)
     assert not found, f"{entity} with {field}='{value}' should not appear in the list"
-
-
-@then('the response contains field "{field}"')
-def step_response_contains_field(context, field):
-    """
-    Assert that the response JSON object contains the given top-level field.
-
-    Useful for single-object endpoints (e.g. /me/) where you want to verify a
-    key is present without asserting its value.
-
-    Example:
-        Then the response contains field "role"
-        Then the response contains field "username"
-    """
-    assert (
-        field in context.response_data
-    ), f"Expected field '{field}' in response, got: {list(context.response_data.keys())}"
 
 
 @then('every item in the response has field "{field}"')

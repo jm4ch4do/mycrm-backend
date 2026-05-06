@@ -64,7 +64,7 @@ Feature: Deal CRUD Operations
             | Detail Deal | Acme Corp  | proposal | open   | 75000.00 | usd      | 60          | inbound     |
         When I request details for "deal" with "name" "Detail Deal"
         Then the response status code is "200"
-        And the response should contain account details
+        And the response should contain details
             | name        | stage    | status | amount   | currency | lead_source |
             | Detail Deal | proposal | open   | 75000.00 | usd      | inbound     |
 

@@ -8,19 +8,32 @@ from urllib.parse import urlencode
 from django.apps import apps
 from django.contrib.auth import get_user_model
 
+# Maps plural entity names to their Django model class names (irregular plurals).
+SINGULAR_MAP = {
+    "activities": "Activity",
+}
+
+
+def entity_to_model_name(entity_name):
+    """Convert a plural entity name to its Django model class name."""
+    entity_lower = entity_name.lower()
+    if entity_lower in SINGULAR_MAP:
+        return SINGULAR_MAP[entity_lower]
+    return entity_lower.rstrip("s").capitalize()
+
 
 def resolve_model(entity_name):
-    """Return the model class for a singular entity name (e.g. 'user', 'account')."""
-    name = entity_name.rstrip("s").capitalize()
+    """Return the model class for a plural or singular entity name."""
+    name = entity_to_model_name(entity_name)
     if name.lower() == "user":
         return get_user_model()
     return apps.get_model("core", name)
 
 
-# Special pluralization rules for entity names
+# Special pluralization rules for entity names (irregular plurals).
 PLURALIZATION_RULES = {
-    # Add special cases here where simple 's' addition doesn't work
-    # e.g., "person": "people", "child": "children"
+    # Maps singular -> plural where adding 's' would be wrong.
+    "activity": "activities",
 }
 
 

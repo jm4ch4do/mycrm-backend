@@ -11,7 +11,7 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client
 
-from core.models import Contact, Deal, DealContactAssoc
+from core.models import Activity, Contact, Deal, DealContactAssoc
 
 
 def clear_test_data():
@@ -31,6 +31,7 @@ def clear_test_data():
 
     # First pass: Delete models with foreign keys to avoid PROTECT constraint violations
     # Order matters here - delete child entities before parents
+    Activity.objects.all().delete()
     DealContactAssoc.objects.all().delete()
     Deal.objects.all().delete()
     Contact.objects.all().delete()
@@ -43,6 +44,7 @@ def clear_test_data():
         # Skip models we've already handled and preserved models
         if model_name not in to_preserve and model_name not in [
             "User",
+            "Activity",
             "Contact",
             "Deal",
             "DealContactAssoc",

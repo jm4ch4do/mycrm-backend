@@ -34,12 +34,14 @@ Feature: Account CRUD Operations
         And the first "account" should have name "Active Co"
 
     Scenario: Update account status
-        Given a new "account" is created
+        Given I create a new "account"
             | name      |
             | Test Corp |
         And I am "authenticated" as "a staff user"
 
-        When I update the account "Test Corp" status to "active"
+        When I update "accounts" with "name" "Test Corp"
+            | status |
+            | active |
 
         Then the "account" with "name" "Test Corp" should have "status" "active"
 
@@ -50,7 +52,7 @@ Feature: Account CRUD Operations
 
         When I request details for "account" with "name" "Detail Corp"
 
-        Then the response should contain account details
+        Then the response should contain details
             | name        | status | type     | industry | website             |
             | Detail Corp | active | customer | Software | https://example.com |
 

@@ -3,14 +3,20 @@ When steps for API requests and entity operations.
 """
 
 import json
-from behave import given, when
+from behave import when
 from django.apps import apps
 
 import utils as _sutils
 from steps.domain.constants import ENTITY_CONFIG
-from steps.utils import normalize_entity_name, resolve_foreign_key_pattern
+from steps.utils import (
+    entity_to_model_name,
+    normalize_entity_name,
+    resolve_foreign_key_pattern,
+)
 
-from core.models import Account
+# ---------------------------------------------------------------------------
+# Generic HTTP request
+# ---------------------------------------------------------------------------
 
 
 @when('I send a "{method}" request to "{endpoint}"')
@@ -67,28 +73,9 @@ def step_send_request_to_endpoint(context, method, endpoint):
     _sutils.response_to_context(context, response)
 
 
-@when('I update the account "{account_name}" status to "{new_status}"')
-def step_update_account_status(context, account_name, new_status):
-    """
-    Update an account's status field by looking it up by name.
-
-    This is a convenience step for a common account operation. For generic
-    entity updates, prefer the 'I update "{entity}"' step instead.
-
-    Example:
-        When I update the account "Acme Corp" status to "inactive"
-    """
-    # Find the account by name
-    account = Account.objects.get(name=account_name)
-
-    response = context.client.patch(
-        f"/accounts/{account.id}/",
-        data=json.dumps({"status": new_status}),
-        content_type="application/json",
-    )
-
-    assert response.status_code == 200, f"Failed to update account: {response.content}"
-    _sutils.response_to_context(context, response)
+# ---------------------------------------------------------------------------
+# Read operations
+# ---------------------------------------------------------------------------
 
 
 @when('I request details for "{entity}" with "{field}" "{value}"')
@@ -113,8 +100,7 @@ def step_request_entity_details(context, entity, field, value):
     endpoint = config["endpoint"]
 
     # Get the model dynamically
-    model_name = entity.rstrip("s").capitalize()  # accounts -> Account
-    model = apps.get_model("core", model_name)
+    model = apps.get_model("core", entity_to_model_name(entity))
 
     # Find the entity by field
     lookup = {field: value}
@@ -165,6 +151,11 @@ def step_request_entities_by_field(context, entity, field, value):
     _sutils.response_to_context(context, response)
 
 
+# ---------------------------------------------------------------------------
+# Write operations
+# ---------------------------------------------------------------------------
+
+
 @when('I update "{entity}" with "{field}" "{value}"')
 def step_update_entity(context, entity, field, value):
     """
@@ -190,8 +181,7 @@ def step_update_entity(context, entity, field, value):
     config = ENTITY_CONFIG[entity]
     endpoint = config["endpoint"]
 
-    model_name = entity.rstrip("s").capitalize()
-    model = apps.get_model("core", model_name)
+    model = apps.get_model("core", entity_to_model_name(entity))
 
     instance = model.objects.get(**{field: value})
     update_data = dict(context.table[0].items())
@@ -225,8 +215,7 @@ def step_soft_delete_entity(context, entity, field, value):
     config = ENTITY_CONFIG[entity]
     endpoint = config["endpoint"]
 
-    model_name = entity.rstrip("s").capitalize()
-    model = apps.get_model("core", model_name)
+    model = apps.get_model("core", entity_to_model_name(entity))
 
     instance = model.objects.get(**{field: value})
 

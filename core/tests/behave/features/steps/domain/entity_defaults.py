@@ -22,7 +22,7 @@ class BaseEntityDefaults:
         This is the main entry point for processing row data.
         """
         result = cls._get_defaults(row_data)
-        result = cls._resolve_foreign_key_references(result)
+        result = cls.resolve_foreign_key_references(result)
         return result
 
     @staticmethod
@@ -55,7 +55,7 @@ class BaseEntityDefaults:
         return cls._counters[entity_type]
 
     @staticmethod
-    def _resolve_foreign_key_references(result):
+    def resolve_foreign_key_references(result):
         """
         Resolve foreign key references using pattern resolution.
 
@@ -188,5 +188,32 @@ class DealDefaults(BaseEntityDefaults):
         if "name" not in result or not result["name"]:
             counter = cls._get_next_counter("deal")
             result["name"] = f"Deal{counter}"
+
+        return result
+
+
+class ActivityDefaults(BaseEntityDefaults):
+    """Default values handler for Activity entities."""
+
+    DEFAULT_TYPE = "task"
+    DEFAULT_STATUS = "planned"
+    DEFAULT_OWNER_USERNAME = "testuser1"
+
+    @classmethod
+    def _get_defaults(cls, row_data):
+        """Returns activity data with defaults applied."""
+        defaults = {
+            "owner_username": cls.DEFAULT_OWNER_USERNAME,
+            "type": cls.DEFAULT_TYPE,
+            "status": cls.DEFAULT_STATUS,
+        }
+
+        # Merge with provided data (provided values take precedence)
+        result = {**defaults, **row_data}
+
+        # Auto-generate title if not provided
+        if "title" not in result or not result["title"]:
+            counter = cls._get_next_counter("activity")
+            result["title"] = f"Activity{counter}"
 
         return result

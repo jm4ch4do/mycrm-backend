@@ -73,7 +73,7 @@ Feature: Contact CRUD Operations
             | Jane       | Smith     | jane@acme.com | Acme Corp            | decision_maker | senior    | VP of Sales | Sales      | 555-1234 | 555-5678 |
         When I request details for "contacts" with "email" "jane@acme.com"
         Then the response status code is "200"
-        And the response should contain account details
+        And the response should contain details
             | first_name | last_name | email         | role           | seniority | job_title   | department | phone    | mobile   |
             | Jane       | Smith     | jane@acme.com | decision_maker | senior    | VP of Sales | Sales      | 555-1234 | 555-5678 |
 

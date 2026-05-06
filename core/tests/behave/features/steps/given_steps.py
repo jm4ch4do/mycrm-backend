@@ -1,5 +1,5 @@
 """
-Given steps for creating entities through the API.
+Given steps: authentication setup, direct-DB state preparation, and API-based entity creation.
 """
 
 import json
@@ -7,59 +7,16 @@ from behave import given
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from steps.domain.constants import ENTITY_CONFIG
-from steps.utils import normalize_entity_name
+from steps.domain.entity_defaults import BaseEntityDefaults
+from steps.utils import entity_to_model_name, normalize_entity_name
 from steps.domain.user_steps import create_users_from_table
 
 user_model = get_user_model()
 
 
-@given('a new "{entity}" is created')
-def step_create_entity_directly(context, entity):
-    """
-    Create a single entity directly in the database from a column-keyed table.
-
-    Table headers are field names; each row creates one object. The value in
-    the first column is used as the context label for that object — stored via
-    setattr() (for URL placeholder resolution) and in context.named_<entity>s
-    (for domain-specific Then steps).
-
-    For 'user' entities, delegates to create_users_from_table() which handles
-    password hashing. All other models use objects.create() directly.
-    Models are resolved from the 'core' app by capitalising the entity name.
-
-    Examples:
-        Given a new "user" is created
-            | username   | password    |
-            | targetuser | testpass123 |
-
-        Given a new "account" is created
-            | name      | status |
-            | Acme Corp | active |
-    """
-    entity_lower = entity.lower()
-
-    if entity_lower == "user":
-        create_users_from_table(context)
-        return
-
-    try:
-        model = apps.get_model("core", entity_lower.capitalize())
-    except LookupError:
-        raise ValueError(
-            f"Unknown entity '{entity}'. Is it registered in the core app?"
-        )
-
-    for row in context.table:
-        data = {key: value for key, value in row.items()}
-        obj = model.objects.create(**data)
-
-        label = data[context.table.headings[0]]
-        setattr(context, label, obj)
-
-        dict_attr = f"named_{entity_lower}s"
-        if not hasattr(context, dict_attr):
-            setattr(context, dict_attr, {})
-        getattr(context, dict_attr)[label] = obj
+# ---------------------------------------------------------------------------
+# Authentication setup
+# ---------------------------------------------------------------------------
 
 
 @given('I am "{auth_state}"')
@@ -86,6 +43,150 @@ def step_auth(context, auth_state, auth=None):
         context.auth_user = user
     else:
         raise ValueError(f"Unknown auth state: '{auth_state}'")
+
+
+# ---------------------------------------------------------------------------
+# Direct DB operations (bypass the API — for test setup only)
+# ---------------------------------------------------------------------------
+
+
+@given('I create a new "{entity}"')
+def step_create_entity_directly(context, entity):
+    """
+    Create a single entity directly in the database from a column-keyed table.
+
+    Table headers are field names; each row creates one object. The value in
+    the first column is used as the context label for that object — stored via
+    setattr() (for URL placeholder resolution) and in context.named_<entity>s
+    (for domain-specific Then steps).
+
+    For 'user' entities, delegates to create_users_from_table() which handles
+    password hashing. All other models use objects.create() directly.
+    Models are resolved from the 'core' app by capitalising the entity name.
+
+    Examples:
+        Given I create a new "user"
+            | username   | password    |
+            | targetuser | testpass123 |
+
+        Given I create a new "account"
+            | name      | status |
+            | Acme Corp | active |
+    """
+    entity_lower = entity.lower()
+
+    if entity_lower == "user":
+        create_users_from_table(context)
+        return
+
+    model_name = entity_to_model_name(normalize_entity_name(entity_lower))
+    try:
+        model = apps.get_model("core", model_name)
+    except LookupError as exc:
+        raise ValueError(
+            f"Unknown entity '{entity}'. Is it registered in the core app?"
+        ) from exc
+
+    field_names = {f.name for f in model._meta.get_fields()}
+
+    # Map FK field names to their attname (e.g. 'account' -> 'account_id')
+    # The ORM accepts account_id="<uuid>" but not account="<uuid-string>"
+    fk_attnames = {
+        f.name: f.attname
+        for f in model._meta.get_fields()
+        if hasattr(f, "attname") and f.attname != f.name
+    }
+
+    for row in context.table:
+        data = {key: value for key, value in row.items()}
+
+        # Resolve FK references (e.g. account_id="Acme Corp" -> account="<uuid>")
+        data = BaseEntityDefaults.resolve_foreign_key_references(data)
+
+        # Rename FK keys to _id form so the ORM accepts string UUIDs
+        data = {fk_attnames.get(k, k): v for k, v in data.items()}
+
+        # Inject owner_user from the test context if the model has it and it wasn't supplied
+        if (
+            "owner_user" in field_names
+            and "owner_user_id" not in data
+            and "owner_user" not in data
+        ):
+            data["owner_user"] = context.test_user
+
+        obj = model.objects.create(**data)
+
+        label = list(row.as_dict().values())[0]
+        setattr(context, label, obj)
+
+        dict_attr = f"named_{entity_lower}s"
+        if not hasattr(context, dict_attr):
+            setattr(context, dict_attr, {})
+        getattr(context, dict_attr)[label] = obj
+
+
+@given('I update "{entity}" with "{field}" "{value}"')
+def step_update_entity_directly(context, entity, field, value):
+    """
+    Update an entity directly in the database from a table row.
+
+    Bypasses the API — use in Given (setup) context only.
+    Use 'When I update ...' to exercise the API update path.
+
+    Example:
+        Given I update "activities" with "title" "My Task"
+            | status    |
+            | completed |
+    """
+    entity = normalize_entity_name(entity)
+    model = apps.get_model("core", entity_to_model_name(entity))
+    instance = model.objects.get(**{field: value})
+
+    field_names = {f.name for f in model._meta.get_fields()}
+    update_data = dict(context.table[0].items())
+
+    for k, v in update_data.items():
+        setattr(instance, k, v)
+    if "updated_by" in field_names:
+        instance.updated_by = context.test_user
+    instance.save()
+
+
+@given('I delete "{entity}" with "{field}" "{value}"')
+@given('I delete "{entity}" with "{field}" "{value}" using "{delete_type}"')
+def step_delete_entity_directly(context, entity, field, value, delete_type=None):
+    """
+    Delete an entity directly in the database.
+
+    Bypasses the API — use in Given (setup) context only.
+    Use 'When I soft delete ...' to exercise the API delete path.
+
+    Default is a permanent (hard) delete — omitting 'using' is the preferred form.
+    Add 'using "soft delete"' to set is_invalid=True and keep the row instead.
+    'using "hard delete"' is also accepted for explicitness but not normally needed.
+
+    Examples:
+        Given I delete "activities" with "title" "Old Task"                          # preferred
+        Given I delete "activities" with "title" "Old Task" using "soft delete"
+        Given I delete "activities" with "title" "Old Task" using "hard delete"      # explicit, same as default
+    """
+    entity = normalize_entity_name(entity)
+    model = apps.get_model("core", entity_to_model_name(entity))
+
+    if delete_type and delete_type.strip().lower() == "soft delete":
+        instance = model.objects.get(**{field: value})
+        field_names = {f.name for f in model._meta.get_fields()}
+        instance.is_invalid = True
+        if "updated_by" in field_names:
+            instance.updated_by = context.test_user
+        instance.save()
+    else:
+        model.objects.filter(**{field: value}).delete()
+
+
+# ---------------------------------------------------------------------------
+# API-based entity creation
+# ---------------------------------------------------------------------------
 
 
 @given('I create "{entity}" through the API')

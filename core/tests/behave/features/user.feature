@@ -4,13 +4,13 @@ Feature: User Management
     So that access control and role-based behaviour works correctly
 
     Scenario: User profile is auto-created on user creation
-        Given a new "user" is created
+        Given I create a new "user"
             | username | password    |
             | roleuser | testpass123 |
         Then the "user" with "username" "roleuser" has a related "profile"
 
     Scenario Outline: Update user role enforces staff-only access
-        Given a new "user" is created
+        Given I create a new "user"
             | username | password    |
             | <target> | testpass123 |
         And I am "authenticated" as "<auth>"
