@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Account, Contact, Deal, DealContactAssoc, UserProfile
+from .models import Account, Activity, Contact, Deal, DealContactAssoc, UserProfile
 
 
 class UserProfileInline(admin.StackedInline):
@@ -169,3 +169,30 @@ class DealContactAssocAdmin(admin.ModelAdmin):
 
     list_display = ("deal", "contact", "created_at")
     readonly_fields = ("created_at",)
+
+
+@admin.register(Activity)
+class ActivityAdmin(admin.ModelAdmin):
+    """Admin interface for Activity model."""
+
+    list_display = (
+        "title",
+        "type",
+        "status",
+        "owner_user",
+        "account",
+        "contact",
+        "deal",
+        "due_at",
+        "created_at",
+    )
+    list_filter = ("type", "status", "is_invalid", "created_at")
+    search_fields = ("title", "description")
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+    fieldsets = (
+        ("Identity", {"fields": ("id", "type", "title", "description")}),
+        ("Context", {"fields": ("account", "contact", "deal")}),
+        ("Lifecycle", {"fields": ("status", "due_at", "completed_at")}),
+        ("Ownership", {"fields": ("owner_user", "created_by", "updated_by")}),
+        ("Audit", {"fields": ("is_invalid", "created_at", "updated_at")}),
+    )
