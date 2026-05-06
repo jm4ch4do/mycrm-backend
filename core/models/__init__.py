@@ -9,6 +9,7 @@ from .deal import (
     DealStatus,
     LeadSource,
 )
+from .task import Task, TaskCategory, TaskPriority, TaskStatus
 from .user_profile import UserProfile, UserRole
 
 __all__ = [
@@ -29,6 +30,10 @@ __all__ = [
     "DealStage",
     "DealStatus",
     "LeadSource",
+    "Task",
+    "TaskCategory",
+    "TaskPriority",
+    "TaskStatus",
     "UserProfile",
     "UserRole",
 ]
