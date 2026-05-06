@@ -1,9 +1,7 @@
-"""
-When steps for API requests and entity operations.
-"""
+"""When steps for API requests and entity operations."""
 
 import json
-from behave import when
+from behave import given, when
 from django.apps import apps
 
 import utils as _sutils
@@ -19,6 +17,8 @@ from steps.utils import (
 # ---------------------------------------------------------------------------
 
 
+@given('I send a "{method}" request to "{endpoint}"')
+@given('I send a "{method}" request to "{endpoint}" with body')
 @when('I send a "{method}" request to "{endpoint}"')
 @when('I send a "{method}" request to "{endpoint}" with body')
 def step_send_request_to_endpoint(context, method, endpoint):

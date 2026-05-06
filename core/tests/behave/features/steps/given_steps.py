@@ -1,6 +1,4 @@
-"""
-Given steps: authentication setup, direct-DB state preparation, and API-based entity creation.
-"""
+"""Given steps: authentication, direct-DB entity creation, and API creation."""
 
 import json
 from behave import given
@@ -22,8 +20,12 @@ user_model = get_user_model()
 @given('I am "{auth_state}"')
 @given('I am "{auth_state}" as "{auth}"')
 def step_auth(context, auth_state, auth=None):
-    """Unified auth step. Logs out when auth_state is 'not authenticated';
-    logs in when auth_state is 'authenticated' using the auth target."""
+    """
+    Unified auth step.
+
+    Logs out when auth_state is 'not authenticated';
+    logs in when auth_state is 'authenticated' using the auth target.
+    """
     state = auth_state.strip().lower()
     if state == "not authenticated":
         context.client.logout()
@@ -53,25 +55,29 @@ def step_auth(context, auth_state, auth=None):
 @given('I create a new "{entity}"')
 def step_create_entity_directly(context, entity):
     """
-    Create a single entity directly in the database from a column-keyed table.
+    Create entities directly in the database using a Gherkin table.
 
-    Table headers are field names; each row creates one object. The value in
-    the first column is used as the context label for that object — stored via
-    setattr() (for URL placeholder resolution) and in context.named_<entity>s
-    (for domain-specific Then steps).
+    Each row in the table creates one record. Column headers are ORM field
+    names; ``*_id`` columns accept a name value resolved to a UUID
+    (e.g. ``account_id = "Acme Corp"``).
 
-    For 'user' entities, delegates to create_users_from_table() which handles
-    password hashing. All other models use objects.create() directly.
-    Models are resolved from the 'core' app by capitalising the entity name.
+    Each created object is stored on the context under its first-column label
+    and under ``context.<entity>`` so the most recently created object is
+    accessible for URL placeholders without a separate ``I store`` step.
+    Objects are also collected in ``context.named_<entity>s``.
+
+    User entities are handled separately for password hashing. Entities
+    with a ``db_create`` factory in ``ENTITY_CONFIG`` use that factory;
+    all others use ``Model.objects.create()`` directly.
 
     Examples:
-        Given I create a new "user"
-            | username   | password    |
-            | targetuser | testpass123 |
-
         Given I create a new "account"
             | name      | status |
             | Acme Corp | active |
+
+        Given I create a new "task"
+            | title   | account_id |
+            | My Task | Acme Corp  |
     """
     entity_lower = entity.lower()
 
@@ -79,7 +85,8 @@ def step_create_entity_directly(context, entity):
         create_users_from_table(context)
         return
 
-    model_name = entity_to_model_name(normalize_entity_name(entity_lower))
+    normalized = normalize_entity_name(entity_lower)
+    model_name = entity_to_model_name(normalized)
     try:
         model = apps.get_model("core", model_name)
     except LookupError as exc:
@@ -87,10 +94,10 @@ def step_create_entity_directly(context, entity):
             f"Unknown entity '{entity}'. Is it registered in the core app?"
         ) from exc
 
-    field_names = {f.name for f in model._meta.get_fields()}
+    config = ENTITY_CONFIG.get(normalized, {})
+    db_create = config.get("db_create")
 
-    # Map FK field names to their attname (e.g. 'account' -> 'account_id')
-    # The ORM accepts account_id="<uuid>" but not account="<uuid-string>"
+    field_names = {f.name for f in model._meta.get_fields()}
     fk_attnames = {
         f.name: f.attname
         for f in model._meta.get_fields()
@@ -99,30 +106,48 @@ def step_create_entity_directly(context, entity):
 
     for row in context.table:
         data = {key: value for key, value in row.items()}
-
-        # Resolve FK references (e.g. account_id="Acme Corp" -> account="<uuid>")
         data = BaseEntityDefaults.resolve_foreign_key_references(data)
 
-        # Rename FK keys to _id form so the ORM accepts string UUIDs
-        data = {fk_attnames.get(k, k): v for k, v in data.items()}
-
-        # Inject owner_user from the test context if the model has it and it wasn't supplied
-        if (
-            "owner_user" in field_names
-            and "owner_user_id" not in data
-            and "owner_user" not in data
-        ):
-            data["owner_user"] = context.test_user
-
-        obj = model.objects.create(**data)
+        if db_create:
+            obj = db_create(data, context.test_user)
+        else:
+            data = {fk_attnames.get(k, k): v for k, v in data.items()}
+            if (
+                "owner_user" in field_names
+                and "owner_user_id" not in data
+                and "owner_user" not in data
+            ):
+                data["owner_user"] = context.test_user
+            obj = model.objects.create(**data)
 
         label = list(row.as_dict().values())[0]
         setattr(context, label, obj)
+        setattr(context, entity_lower, obj)
 
         dict_attr = f"named_{entity_lower}s"
         if not hasattr(context, dict_attr):
             setattr(context, dict_attr, {})
         getattr(context, dict_attr)[label] = obj
+
+
+@given('I store the "{entity}" with "{field}" "{value}" as "{alias}"')
+def step_store_entity_as(context, entity, field, value, alias):
+    """
+    Look up an entity by field/value and store it on context under an alias.
+
+    The stored alias is available in URL placeholders as ``{alias.attr}``.
+    Supports ORM double-underscore lookups for traversing related fields
+    (e.g. ``activity__title``).
+
+    Examples:
+        Given I store the "task" with "activity__title" "My Task" as "my_task"
+        Given I store the "account" with "name" "Acme Corp" as "acme"
+        When I send a "POST" request to "/tasks/{context.my_task.id}/complete/"
+    """
+    entity = normalize_entity_name(entity)
+    model = apps.get_model("core", entity_to_model_name(entity))
+    instance = model.objects.get(**{field: value})
+    setattr(context, alias, instance)
 
 
 @given('I update "{entity}" with "{field}" "{value}"')
@@ -156,19 +181,19 @@ def step_update_entity_directly(context, entity, field, value):
 @given('I delete "{entity}" with "{field}" "{value}" using "{delete_type}"')
 def step_delete_entity_directly(context, entity, field, value, delete_type=None):
     """
-    Delete an entity directly in the database.
+    Delete an entity directly in the database, bypassing the API.
 
-    Bypasses the API — use in Given (setup) context only.
-    Use 'When I soft delete ...' to exercise the API delete path.
+    Use for test setup only. To exercise the API soft-delete path, use
+    ``When I soft delete ...`` instead.
 
-    Default is a permanent (hard) delete — omitting 'using' is the preferred form.
-    Add 'using "soft delete"' to set is_invalid=True and keep the row instead.
-    'using "hard delete"' is also accepted for explicitness but not normally needed.
+    Omitting ``using`` performs a permanent (hard) delete. Adding
+    ``using "soft delete"`` sets ``is_invalid=True`` without removing
+    the row. ``using "hard delete"`` is accepted but redundant.
 
     Examples:
-        Given I delete "activities" with "title" "Old Task"                          # preferred
+        Given I delete "activities" with "title" "Old Task"
         Given I delete "activities" with "title" "Old Task" using "soft delete"
-        Given I delete "activities" with "title" "Old Task" using "hard delete"      # explicit, same as default
+        Given I delete "activities" with "title" "Old Task" using "hard delete"
     """
     entity = normalize_entity_name(entity)
     model = apps.get_model("core", entity_to_model_name(entity))
@@ -176,6 +201,11 @@ def step_delete_entity_directly(context, entity, field, value, delete_type=None)
     if delete_type and delete_type.strip().lower() == "soft delete":
         instance = model.objects.get(**{field: value})
         field_names = {f.name for f in model._meta.get_fields()}
+        if "is_invalid" not in field_names:
+            raise ValueError(
+                f"Model {model.__name__} does not support soft delete "
+                "(no is_invalid field)"
+            )
         instance.is_invalid = True
         if "updated_by" in field_names:
             instance.updated_by = context.test_user
@@ -210,12 +240,12 @@ def step_create_entities(context, entity):
             | Acme Corp | active | customer |
 
         Given I create "deals" through the API
-            | name              | account_id | stage    | status | amount    | currency |
-            | Enterprise License | Acme Corp  | proposal | open   | 120000.00 | usd      |
+            | name   | account_id | stage |
+            | Deal 1 | Acme Corp  | lead  |
 
         Given I create "contacts" through the API
-            | first_name | last_name | email          | account_id | role           | seniority |
-            | John       | Doe       | john@acme.com  | Acme Corp  | decision_maker | executive |
+            | first_name | last_name | account_id |
+            | John       | Doe       | Acme Corp  |
     """
     entity = normalize_entity_name(entity)
 
@@ -266,18 +296,15 @@ def step_create_entities(context, entity):
 @given('I generate "{count}" "{entity}" with "{field}" "{value}" through the API')
 def step_generate_multiple_entities(context, count, entity, field=None, value=None):
     """
-    Generate multiple entities with auto-generated default values.
+    Generate a set number of entities using auto-generated default values.
 
-    Creates the specified number of entities, each with a unique set of
-    defaults produced by the entity's defaults class. An optional field/value
-    override can be applied to every generated entity (useful for setting a
-    shared foreign key).
+    Each entity is created with a unique set of defaults from the entity's
+    defaults class. An optional field/value pair can be applied to every
+    entity, useful for setting a shared foreign key across all records.
 
     Examples:
         Given I generate "50" "contacts" through the API
-
-        Given I generate "10" "deals" with "account_id" "Acme Corp" through the API
-
+        Given I generate "10" "tasks" with "account_id" "Acme" through the API
         Given I generate "5" "accounts" through the API
     """
     entity = normalize_entity_name(entity)

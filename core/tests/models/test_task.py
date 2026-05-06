@@ -15,7 +15,7 @@ from core.models import (
 
 
 def make_activity(db, account, test_user, **kwargs):
-    """Helper: create a minimal Activity(type=task) for use in Task tests."""
+    """Create a minimal Activity(type=task) for use in Task tests."""
     defaults = dict(
         type=ActivityType.TASK,
         title="Test Task Activity",
@@ -143,19 +143,19 @@ class TestTaskEnums:
     """Test Task enum choices."""
 
     def test_priority_choices(self):
-        """TaskPriority has the expected values."""
+        """Priority choices have the expected values."""
         assert TaskPriority.LOW == "low"
         assert TaskPriority.MEDIUM == "medium"
         assert TaskPriority.HIGH == "high"
 
     def test_category_choices(self):
-        """TaskCategory has the expected values."""
+        """Category choices have the expected values."""
         assert TaskCategory.FOLLOW_UP == "follow_up"
         assert TaskCategory.ADMIN == "admin"
         assert TaskCategory.CUSTOMER == "customer"
 
     def test_state_choices(self):
-        """TaskState has the expected values."""
+        """State choices have the expected values."""
         assert TaskState.OPEN == "open"
         assert TaskState.COMPLETED == "completed"
 

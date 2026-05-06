@@ -1,8 +1,10 @@
 """
 Entity default handlers for BDD tests.
+
 Each entity class provides default values for required fields.
 """
 
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from steps.utils import resolve_foreign_key_pattern
 
@@ -19,6 +21,7 @@ class BaseEntityDefaults:
     def prepare_entity_data(cls, row_data):
         """
         Prepare entity data by applying defaults and resolving foreign keys.
+
         This is the main entry point for processing row data.
         """
         result = cls._get_defaults(row_data)
@@ -27,7 +30,7 @@ class BaseEntityDefaults:
 
     @staticmethod
     def _get_defaults(row_data):
-        """Returns entity data with defaults applied."""
+        """Return entity data with defaults applied."""
         raise NotImplementedError("Subclasses must implement _get_defaults")
 
     @staticmethod
@@ -59,7 +62,7 @@ class BaseEntityDefaults:
         """
         Resolve foreign key references using pattern resolution.
 
-        Delegates to resolve_foreign_key_pattern() utility for pattern matching.
+        Delegates to resolve_foreign_key_pattern() for pattern matching.
         Supports:
         - Pattern 1: {entity}_id_from_{field}
         - Pattern 2: {entity}_id (defaults to lookup by 'name')
@@ -99,7 +102,7 @@ class AccountDefaults(BaseEntityDefaults):
 
     @classmethod
     def _get_defaults(cls, row_data):
-        """Returns account data with defaults applied."""
+        """Return account data with defaults applied."""
         # Set default values for optional fields
         defaults = {
             "status": cls.DEFAULT_STATUS,
@@ -131,7 +134,7 @@ class ContactDefaults(BaseEntityDefaults):
 
     @classmethod
     def _get_defaults(cls, row_data):
-        """Returns contact data with defaults applied."""
+        """Return contact data with defaults applied."""
         # Set default values for optional fields
         defaults = {
             "owner_username": cls.DEFAULT_OWNER_USERNAME,
@@ -172,7 +175,7 @@ class DealDefaults(BaseEntityDefaults):
 
     @classmethod
     def _get_defaults(cls, row_data):
-        """Returns deal data with defaults applied."""
+        """Return deal data with defaults applied."""
         defaults = {
             "owner_username": cls.DEFAULT_OWNER_USERNAME,
             "stage": cls.DEFAULT_STAGE,
@@ -201,7 +204,7 @@ class ActivityDefaults(BaseEntityDefaults):
 
     @classmethod
     def _get_defaults(cls, row_data):
-        """Returns activity data with defaults applied."""
+        """Return activity data with defaults applied."""
         defaults = {
             "owner_username": cls.DEFAULT_OWNER_USERNAME,
             "type": cls.DEFAULT_TYPE,
@@ -217,3 +220,80 @@ class ActivityDefaults(BaseEntityDefaults):
             result["title"] = f"Activity{counter}"
 
         return result
+
+
+class TaskDefaults(BaseEntityDefaults):
+    """Default values handler for Task entity creation.
+
+    Supports both the API path (via ``_get_defaults``) and direct-DB creation
+    (via ``db_create``). The ``db_create`` factory creates both the parent
+    Activity and the Task row in a single call.
+    """
+
+    DEFAULT_OWNER_USERNAME = "testuser1"
+
+    # Task-own fields; everything else belongs to the parent Activity.
+    _TASK_FIELDS = {
+        "priority",
+        "category",
+        "estimated_duration_minutes",
+        "state",
+    }
+
+    @classmethod
+    def _get_defaults(cls, row_data):
+        """Return task data with defaults applied."""
+        defaults = {
+            "owner_username": cls.DEFAULT_OWNER_USERNAME,
+        }
+
+        # Merge with provided data (provided values take precedence)
+        result = {**defaults, **row_data}
+
+        # Auto-generate title if not provided
+        if "title" not in result or not result["title"]:
+            counter = cls._get_next_counter("task")
+            result["title"] = f"Task{counter}"
+
+        return result
+
+    @staticmethod
+    def db_create(data, user):
+        """
+        Create a Task and its parent Activity directly in the database.
+
+        Accepts a resolved field/value mapping (FK names with UUID string
+        values). Fields in ``_TASK_FIELDS`` go to the Task row; all others
+        go to the parent Activity.
+        """
+        activity_model = apps.get_model("core", "Activity")
+        task_model = apps.get_model("core", "Task")
+
+        # Map Activity FK field names to their attnames (account → account_id).
+        activity_fk_attnames = {
+            f.name: f.attname
+            for f in activity_model._meta.get_fields()
+            if hasattr(f, "attname") and f.attname != f.name
+        }
+
+        activity_data = {}
+        task_data = {}
+        for k, v in data.items():
+            if k in TaskDefaults._TASK_FIELDS:
+                task_data[k] = v
+            else:
+                activity_data[activity_fk_attnames.get(k, k)] = v
+
+        # created_by is set explicitly; remove it if it appears in the table.
+        activity_data.pop("created_by", None)
+        activity_data.pop("created_by_id", None)
+
+        if "owner_user" not in activity_data and "owner_user_id" not in activity_data:
+            activity_data["owner_user"] = user
+
+        activity = activity_model.objects.create(
+            type="task",
+            created_by=user,
+            **activity_data,
+        )
+        return task_model.objects.create(activity=activity, **task_data)

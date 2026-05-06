@@ -1,6 +1,4 @@
-"""
-Common utility functions for all behave steps.
-"""
+"""Common utility functions for all behave steps."""
 
 import json
 import re
@@ -69,7 +67,7 @@ def parse_literal(value):
 
 def resolve_foreign_key_pattern(field_name, value):
     """
-    Resolve foreign key references using two patterns:
+    Resolve foreign key references using two patterns.
 
     Pattern 1: {entity}_id_from_{field}
         Example: account_id_from_name = "Acme Corp"
@@ -134,19 +132,22 @@ def resolve_foreign_key_pattern(field_name, value):
 
 def resolve_url_placeholders(endpoint, context):
     """
-    Replace ``{varname.attr}`` placeholders in a URL using context attributes.
+    Replace ``{context.varname.attr}`` placeholders in a URL using context attributes.
 
-    For each ``{name.attr}`` token the corresponding object is retrieved via
-    ``getattr(context, name)`` and the placeholder is replaced with
-    ``str(getattr(obj, attr))``.  This is entity-agnostic — any object stored
-    on the behave context can be referenced.
+    The ``context.`` prefix is required to make it explicit that the value is
+    read from the behave context.  The bare ``{varname.attr}`` form is also
+    accepted for backward compatibility.
 
-    Example:
-        /users/{targetuser.id}/  →  /users/42/
-        /accounts/{acme.uuid}/   →  /accounts/…/
+    For each token the corresponding object is retrieved via
+    ``getattr(context, varname)`` and the placeholder is replaced with
+    ``str(getattr(obj, attr))``.
+
+    Examples:
+        /tasks/{context.task.id}/complete/  →  /tasks/<uuid>/complete/
+        /users/{context.targetuser.id}/     →  /users/42/
 
     Raises:
-        AttributeError: if ``context`` has no attribute ``name``.
+        AttributeError: if ``context`` has no attribute ``varname``.
     """
 
     def _replace(match):
@@ -154,7 +155,8 @@ def resolve_url_placeholders(endpoint, context):
         obj = getattr(context, name)
         return str(getattr(obj, attr))
 
-    return re.sub(r"\{([^.}]+)\.([^}]+)\}", _replace, endpoint)
+    # Matches both {context.varname.attr} and legacy {varname.attr}
+    return re.sub(r"\{(?:context\.)?([^.}]+)\.([^}]+)\}", _replace, endpoint)
 
 
 def build_url_with_query_params(endpoint, context):

@@ -5,18 +5,19 @@ This file sets up the Django test environment for behave BDD tests.
 """
 
 # Initialize Django before importing models
-import setup  # pylint: disable=unused-import
+import setup  # pylint: disable=unused-import  # noqa: F401
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client
 
-from core.models import Activity, Contact, Deal, DealContactAssoc
+from core.models import Activity, Contact, Deal, DealContactAssoc, Task
 
 
 def clear_test_data():
     """
     Clear all test data before each scenario except preserved models.
+
     Add models that should NOT be cleared to "preserved".
     Everything else will be automatically cleared.
     """
@@ -30,7 +31,9 @@ def clear_test_data():
     ]
 
     # First pass: Delete models with foreign keys to avoid PROTECT constraint violations
-    # Order matters here - delete child entities before parents
+    # Order matters here - delete child entities before parents.
+    # Task is cascade-deleted when its parent Activity is deleted.
+    Task.objects.all().delete()
     Activity.objects.all().delete()
     DealContactAssoc.objects.all().delete()
     Deal.objects.all().delete()
@@ -48,6 +51,7 @@ def clear_test_data():
             "Contact",
             "Deal",
             "DealContactAssoc",
+            "Task",
         ]:
             model.objects.all().delete()
 

@@ -1,10 +1,15 @@
-"""
-Constants and configuration for BDD tests.
-"""
+"""Constants and configuration for BDD tests."""
 
-from steps.domain.entity_defaults import AccountDefaults, ActivityDefaults, ContactDefaults, DealDefaults
+from steps.domain.entity_defaults import (
+    AccountDefaults,
+    ActivityDefaults,
+    ContactDefaults,
+    DealDefaults,
+    TaskDefaults,
+)
 
-# Entity mapping: maps entity names to their API endpoints, context attributes, and default handlers
+# Per-entity step configuration: endpoint URL, context attribute, defaults
+# class, and an optional db_create factory for direct-DB creation.
 ENTITY_CONFIG = {
     "accounts": {
         "endpoint": "/accounts/",
@@ -25,5 +30,11 @@ ENTITY_CONFIG = {
         "endpoint": "/deals/",
         "context_attr": "created_deals",
         "defaults_class": DealDefaults,
+    },
+    "tasks": {
+        "endpoint": "/tasks/",
+        "context_attr": "created_tasks",
+        "defaults_class": TaskDefaults,
+        "db_create": TaskDefaults.db_create,
     },
 }
