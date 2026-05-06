@@ -2,7 +2,15 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Account, Activity, Contact, Deal, DealContactAssoc, UserProfile
+from .models import (
+    Account,
+    Activity,
+    Contact,
+    Deal,
+    DealContactAssoc,
+    Task,
+    UserProfile,
+)
 
 
 class UserProfileInline(admin.StackedInline):
@@ -195,4 +203,34 @@ class ActivityAdmin(admin.ModelAdmin):
         ("Lifecycle", {"fields": ("status", "due_at", "completed_at")}),
         ("Ownership", {"fields": ("owner_user", "created_by", "updated_by")}),
         ("Audit", {"fields": ("is_invalid", "created_at", "updated_at")}),
+    )
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    """Admin interface for Task model."""
+
+    list_display = (
+        "activity",
+        "state",
+        "priority",
+        "category",
+        "estimated_duration_minutes",
+    )
+    list_filter = ("state", "priority", "category")
+    search_fields = ("activity__title", "activity__description")
+    readonly_fields = ("id",)
+    fieldsets = (
+        ("Identity", {"fields": ("id", "activity")}),
+        (
+            "Task Details",
+            {
+                "fields": (
+                    "state",
+                    "priority",
+                    "category",
+                    "estimated_duration_minutes",
+                )
+            },
+        ),
     )

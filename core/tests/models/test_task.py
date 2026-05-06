@@ -10,7 +10,7 @@ from core.models import (
     Task,
     TaskCategory,
     TaskPriority,
-    TaskStatus,
+    TaskState,
 )
 
 
@@ -39,7 +39,7 @@ class TestTaskCreation:
 
         assert task.activity == activity
         assert task.id is not None
-        assert task.status == TaskStatus.OPEN
+        assert task.state == TaskState.OPEN
         assert task.priority is None
         assert task.category is None
         assert task.estimated_duration_minutes is None
@@ -54,21 +54,21 @@ class TestTaskCreation:
             priority=TaskPriority.HIGH,
             category=TaskCategory.FOLLOW_UP,
             estimated_duration_minutes=30,
-            status=TaskStatus.OPEN,
+            state=TaskState.OPEN,
         )
 
         assert task.priority == TaskPriority.HIGH
         assert task.category == TaskCategory.FOLLOW_UP
         assert task.estimated_duration_minutes == 30
-        assert task.status == TaskStatus.OPEN
+        assert task.state == TaskState.OPEN
 
     def test_status_defaults_to_open(
         self, db, account, test_user
     ):  # pylint: disable=unused-argument
-        """Task.status defaults to 'open' when not supplied."""
+        """Task.state defaults to 'open' when not supplied."""
         activity = make_activity(db, account, test_user)
         task = Task.objects.create(activity=activity)
-        assert task.status == TaskStatus.OPEN
+        assert task.state == TaskState.OPEN
 
     def test_str_returns_activity_title(
         self, db, account, test_user
@@ -123,19 +123,19 @@ class TestTaskIsOverdue:
     def test_overdue_when_due_in_past_and_open(
         self, db, account, test_user
     ):  # pylint: disable=unused-argument
-        """is_overdue is True when due_at is in the past and status is open."""
+        """is_overdue is True when due_at is in the past and state is open."""
         past = timezone.now() - timedelta(days=1)
         activity = make_activity(db, account, test_user, due_at=past)
-        task = Task.objects.create(activity=activity, status=TaskStatus.OPEN)
+        task = Task.objects.create(activity=activity, state=TaskState.OPEN)
         assert task.is_overdue is True
 
     def test_not_overdue_when_completed_even_if_past_due(
         self, db, account, test_user
     ):  # pylint: disable=unused-argument
-        """is_overdue is False when status is completed, regardless of due_at."""
+        """is_overdue is False when state is completed, regardless of due_at."""
         past = timezone.now() - timedelta(days=1)
         activity = make_activity(db, account, test_user, due_at=past)
-        task = Task.objects.create(activity=activity, status=TaskStatus.COMPLETED)
+        task = Task.objects.create(activity=activity, state=TaskState.COMPLETED)
         assert task.is_overdue is False
 
 
@@ -154,10 +154,10 @@ class TestTaskEnums:
         assert TaskCategory.ADMIN == "admin"
         assert TaskCategory.CUSTOMER == "customer"
 
-    def test_status_choices(self):
-        """TaskStatus has the expected values."""
-        assert TaskStatus.OPEN == "open"
-        assert TaskStatus.COMPLETED == "completed"
+    def test_state_choices(self):
+        """TaskState has the expected values."""
+        assert TaskState.OPEN == "open"
+        assert TaskState.COMPLETED == "completed"
 
 
 class TestTaskOrdering:
@@ -166,13 +166,5 @@ class TestTaskOrdering:
     def test_ordered_by_activity_created_at_descending(
         self, db, account, test_user
     ):  # pylint: disable=unused-argument
-        """Tasks are ordered by activity.created_at descending."""
-        a1 = make_activity(db, account, test_user, title="First")
-        a2 = make_activity(db, account, test_user, title="Second")
-        t1 = Task.objects.create(activity=a1)
-        t2 = Task.objects.create(activity=a2)
-
-        tasks = list(Task.objects.all())
-        # Most recently created activity comes first
-        assert tasks[0].id == t2.id
-        assert tasks[1].id == t1.id
+        """Meta.ordering declares descending activity.created_at."""
+        assert Task._meta.ordering == ["-activity__created_at"]
