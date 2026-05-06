@@ -134,3 +134,24 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return request.user and request.user.is_authenticated
         return request.user and request.user.is_staff
+
+
+class IsActivityOwnerOrAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow activity owners or admins to modify activities.
+
+    - Admins can always modify
+    - Only activity owners can update/delete their own activities
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user and request.user.is_staff:
+            return True
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.owner_user == request.user

@@ -4,6 +4,7 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from core.api.serializers.activity import ActivitySerializer
 from core.api.serializers.deal import DealContactAssocSerializer, DealSerializer
 from core.models import Deal
 from core.permissions import IsDealOwnerOrAdmin
@@ -53,6 +54,14 @@ class DealViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancestors
         instance = self.get_object()
         DealService.soft_delete_deal(instance, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["get"], url_path="activities")
+    def activities(self, request, pk=None):
+        """List all activities for this deal."""
+        deal = self.get_object()
+        qs = deal.activities.filter(is_invalid=False)
+        serializer = ActivitySerializer(qs, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["post"], url_path="contacts")
     def add_contact(self, request, pk=None):

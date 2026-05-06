@@ -1,9 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.api.serializers import ContactSerializer
+from core.api.serializers.activity import ActivitySerializer
 from core.models import Contact
 from core.permissions import IsContactOwnerOrAdmin
 from core.services.domain.contact_service import ContactService
@@ -51,6 +53,14 @@ class ContactViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
         instance = self.get_object()
         ContactService.soft_delete_contact(instance, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["get"], url_path="activities")
+    def activities(self, request, pk=None):
+        """List all activities for this contact."""
+        contact = self.get_object()
+        qs = contact.activities.filter(is_invalid=False)
+        serializer = ActivitySerializer(qs, many=True)
+        return Response(serializer.data)
 
     # ===== Query Methods =====
 

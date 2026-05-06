@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.api.serializers import AccountSerializer, ContactSerializer
+from core.api.serializers.activity import ActivitySerializer
 from core.models import Account
 from core.permissions import IsAccountOwnerOrAdmin
 from core.services.domain.account_service import AccountService
@@ -59,6 +60,14 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
         account = self.get_object()
         contacts = account.contacts.all()
         serializer = ContactSerializer(contacts, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"], url_path="activities")
+    def activities(self, request, pk=None):
+        """List all activities for this account."""
+        account = self.get_object()
+        qs = account.activities.filter(is_invalid=False)
+        serializer = ActivitySerializer(qs, many=True)
         return Response(serializer.data)
 
     # ===== Query Methods =====
