@@ -9,6 +9,7 @@ from .deal import (
     DealStatus,
     LeadSource,
 )
+from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
 from .task import Task, TaskCategory, TaskPriority, TaskState
 from .user_profile import UserProfile, UserRole
 
@@ -30,6 +31,10 @@ __all__ = [
     "DealStage",
     "DealStatus",
     "LeadSource",
+    "Meeting",
+    "MeetingContactAssoc",
+    "MeetingOutcome",
+    "MeetingUserAssoc",
     "Task",
     "TaskCategory",
     "TaskPriority",
