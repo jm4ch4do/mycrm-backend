@@ -5,6 +5,7 @@ from steps.domain.entity_defaults import (
     ActivityDefaults,
     ContactDefaults,
     DealDefaults,
+    MeetingDefaults,
     TaskDefaults,
 )
 
@@ -30,6 +31,12 @@ ENTITY_CONFIG = {
         "endpoint": "/deals/",
         "context_attr": "created_deals",
         "defaults_class": DealDefaults,
+    },
+    "meetings": {
+        "endpoint": "/meetings/",
+        "context_attr": "created_meetings",
+        "defaults_class": MeetingDefaults,
+        "db_create": MeetingDefaults.db_create,
     },
     "tasks": {
         "endpoint": "/tasks/",
