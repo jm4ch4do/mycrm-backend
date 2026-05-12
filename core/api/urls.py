@@ -5,6 +5,7 @@ from core.api.views.account import AccountViewSet
 from core.api.views.activity import ActivityViewSet
 from core.api.views.contact import ContactViewSet
 from core.api.views.deal import DealViewSet
+from core.api.views.meeting import MeetingViewSet
 from core.api.views.task import TaskViewSet
 from core.api.views.user import CurrentUserView, UserViewSet
 
@@ -13,6 +14,7 @@ router.register(r"accounts", AccountViewSet, basename="account")
 router.register(r"activities", ActivityViewSet, basename="activity")
 router.register(r"contacts", ContactViewSet, basename="contact")
 router.register(r"deals", DealViewSet, basename="deal")
+router.register(r"meetings", MeetingViewSet, basename="meeting")
 router.register(r"tasks", TaskViewSet, basename="task")
 router.register(r"users", UserViewSet, basename="user")
 

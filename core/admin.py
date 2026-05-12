@@ -8,6 +8,9 @@ from .models import (
     Contact,
     Deal,
     DealContactAssoc,
+    Meeting,
+    MeetingContactAssoc,
+    MeetingUserAssoc,
     Task,
     UserProfile,
 )
@@ -234,3 +237,43 @@ class TaskAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(Meeting)
+class MeetingAdmin(admin.ModelAdmin):
+    """Admin interface for Meeting model."""
+
+    list_display = (
+        "activity",
+        "start_time",
+        "end_time",
+        "location",
+        "outcome",
+    )
+    list_filter = ("outcome",)
+    search_fields = ("activity__title", "location")
+    readonly_fields = ("id",)
+    fieldsets = (
+        ("Identity", {"fields": ("id", "activity")}),
+        (
+            "Scheduling",
+            {"fields": ("start_time", "end_time", "location", "meeting_url")},
+        ),
+        ("Outcome", {"fields": ("outcome", "summary")}),
+    )
+
+
+@admin.register(MeetingUserAssoc)
+class MeetingUserAssocAdmin(admin.ModelAdmin):
+    """Admin interface for MeetingUserAssoc model."""
+
+    list_display = ("meeting", "user", "created_at")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(MeetingContactAssoc)
+class MeetingContactAssocAdmin(admin.ModelAdmin):
+    """Admin interface for MeetingContactAssoc model."""
+
+    list_display = ("meeting", "contact", "created_at")
+    readonly_fields = ("created_at",)
