@@ -5,6 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Account,
     Activity,
+    Call,
     Contact,
     Deal,
     DealContactAssoc,
@@ -277,3 +278,27 @@ class MeetingContactAssocAdmin(admin.ModelAdmin):
 
     list_display = ("meeting", "contact", "created_at")
     readonly_fields = ("created_at",)
+
+
+@admin.register(Call)
+class CallAdmin(admin.ModelAdmin):
+    """Admin interface for Call model."""
+
+    list_display = (
+        "activity",
+        "direction",
+        "outcome",
+        "phone_number",
+        "duration_seconds",
+    )
+    list_filter = ("direction", "outcome")
+    search_fields = ("activity__title", "phone_number", "summary")
+    readonly_fields = ("id",)
+    fieldsets = (
+        ("Identity", {"fields": ("id", "activity")}),
+        (
+            "Call Details",
+            {"fields": ("direction", "phone_number", "duration_seconds")},
+        ),
+        ("Outcome", {"fields": ("outcome", "summary")}),
+    )

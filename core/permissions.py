@@ -197,3 +197,24 @@ class IsMeetingOwnerOrAdmin(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.activity.owner_user == request.user
+
+
+class IsCallOwnerOrAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow call owners or admins to modify calls.
+
+    - Admins can always modify
+    - Only the owner (via call.activity.owner_user) can update/delete their calls
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user and request.user.is_staff:
+            return True
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.activity.owner_user == request.user
