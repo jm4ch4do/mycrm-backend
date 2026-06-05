@@ -34,13 +34,13 @@ class Note(models.Model):
         User, on_delete=models.PROTECT, related_name="notes"
     )
     account = models.ForeignKey(
-        "Account", on_delete=models.PROTECT, null=True, blank=True
+        "Account", on_delete=models.SET_NULL, null=True, blank=True
     )
     contact = models.ForeignKey(
-        "Contact", on_delete=models.PROTECT, null=True, blank=True
+        "Contact", on_delete=models.SET_NULL, null=True, blank=True
     )
     deal = models.ForeignKey(
-        "Deal", on_delete=models.PROTECT, null=True, blank=True
+        "Deal", on_delete=models.SET_NULL, null=True, blank=True
     )
 
     # Note-specific attributes

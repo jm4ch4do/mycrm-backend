@@ -108,6 +108,14 @@ def step_create_entity_directly(context, entity):
         data = {key: value for key, value in row.items()}
         data = BaseEntityDefaults.resolve_foreign_key_references(data)
 
+        # Convert string boolean values to actual booleans
+        for key, value in data.items():
+            if isinstance(value, str):
+                if value.lower() == "true":
+                    data[key] = True
+                elif value.lower() == "false":
+                    data[key] = False
+
         if db_create:
             obj = db_create(data, context.test_user)
         else:
@@ -118,6 +126,12 @@ def step_create_entity_directly(context, entity):
                 and "owner_user" not in data
             ):
                 data["owner_user"] = context.test_user
+            if (
+                "author" in field_names
+                and "author_id" not in data
+                and "author" not in data
+            ):
+                data["author"] = context.test_user
             obj = model.objects.create(**data)
 
         label = list(row.as_dict().values())[0]
@@ -268,9 +282,12 @@ def step_create_entities(context, entity):
         row_data = {key: value for key, value in row.items()}
         complete_data = defaults_class.prepare_entity_data(row_data)
         owner_username = complete_data.pop("owner_username", None)
+        author_username = complete_data.pop("author_username", None)
 
-        # Get or create user for entity ownership
-        if owner_username:
+        # Get or create user for entity ownership (check author_username first for Note entities)
+        if author_username:
+            user = defaults_class.get_or_create_user(context, author_username)
+        elif owner_username:
             user = defaults_class.get_or_create_user(context, owner_username)
         else:
             user = context.test_user
@@ -326,7 +343,10 @@ def step_generate_multiple_entities(context, count, entity, field=None, value=No
     created_list = getattr(context, context_attr)
 
     # Get or create default user once
-    default_username = defaults_class.DEFAULT_OWNER_USERNAME
+    default_username = (
+        getattr(defaults_class, "DEFAULT_AUTHOR_USERNAME", None)
+        or getattr(defaults_class, "DEFAULT_OWNER_USERNAME", None)
+    )
     user = defaults_class.get_or_create_user(context, default_username)
     context.client.force_login(user)
 
@@ -337,6 +357,7 @@ def step_generate_multiple_entities(context, count, entity, field=None, value=No
             row_data[field] = value
         complete_data = defaults_class.prepare_entity_data(row_data)
         complete_data.pop("owner_username", None)
+        complete_data.pop("author_username", None)
 
         # Create entity via API
         response = context.client.post(
