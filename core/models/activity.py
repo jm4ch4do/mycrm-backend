@@ -73,6 +73,7 @@ class Activity(models.Model):
     )
     due_at = models.DateTimeField(blank=True, null=True)
     completed_at = models.DateTimeField(blank=True, null=True)
+    is_overdue = models.BooleanField(default=False, db_index=True)
 
     # Audit
     created_at = models.DateTimeField(auto_now_add=True)
