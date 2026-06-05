@@ -87,33 +87,6 @@ def step_verify_accounts_in_response(context):
         assert found, f"Account not found in response: {expected}"
 
 
-@then('the first "{entity}" should have "{field}" "{expected_value}"')
-def step_verify_first_entity_field(context, entity, field, expected_value):
-    """
-    Verify a field value of the first entity in the response list.
-
-    Useful for checking ordering or verifying the top result after filtering.
-    Works with both flat list and paginated responses.
-
-    Examples:
-        Then the first "account" should have "name" "Acme Corp"
-        Then the first "deal" should have "stage" "proposal"
-    """
-    entity = normalize_entity_name(entity)
-
-    # Handle both list and paginated responses
-    if isinstance(context.response_data, dict) and "results" in context.response_data:
-        items = context.response_data["results"]
-    else:
-        items = context.response_data
-
-    assert len(items) > 0, f"No {entity} in response"
-    actual_value = items[0][field]
-    assert (
-        actual_value == expected_value
-    ), f"Expected {field}='{expected_value}', got '{actual_value}'"
-
-
 @then("the response should contain details")
 def step_verify_account_details(context):
     """

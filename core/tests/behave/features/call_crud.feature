@@ -31,7 +31,9 @@ Feature: Call CRUD Operations
             | field     | operator | value   |
             | direction | eq       | inbound |
         Then the response status code is "200" and contains "1" records
-        And the first "call" should have "title" "Inbound Call"
+        And the response should contain details
+            | title        |
+            | Inbound Call |
 
     Scenario: Filter by outcome
         Given I create a new "call"
@@ -42,7 +44,9 @@ Feature: Call CRUD Operations
             | field   | operator | value     |
             | outcome | eq       | connected |
         Then the response status code is "200" and contains "1" records
-        And the first "call" should have "title" "Connected Call"
+        And the response should contain details
+            | title          |
+            | Connected Call |
 
     Scenario: Retrieve single call details
         Given I create a new "call"

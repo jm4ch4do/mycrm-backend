@@ -31,7 +31,9 @@ Feature: Meeting CRUD Operations
             | field   | operator | value     |
             | outcome | eq       | completed |
         Then the response status code is "200" and contains "1" records
-        And the first "meeting" should have "title" "Done Meeting"
+        And the response should contain details
+            | title        |
+            | Done Meeting |
 
     Scenario: Retrieve single meeting details
         Given I create a new "meeting"
