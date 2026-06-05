@@ -6,6 +6,7 @@ from .call_service import CallService
 from .contact_service import ContactService
 from .deal_service import DealService
 from .meeting_service import MeetingService
+from .note_service import NoteService
 from .task_service import TaskService
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "ContactService",
     "DealService",
     "MeetingService",
+    "NoteService",
     "TaskService",
 ]
