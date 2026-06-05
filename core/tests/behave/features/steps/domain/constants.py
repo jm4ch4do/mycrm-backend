@@ -1,6 +1,6 @@
 """Constants and configuration for BDD tests."""
 
-from steps.domain.entity_defaults import (
+from steps.domain.defaults import (
     AccountDefaults,
     ActivityDefaults,
     CallDefaults,

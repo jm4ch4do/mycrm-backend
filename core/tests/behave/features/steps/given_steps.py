@@ -5,7 +5,7 @@ from behave import given
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from steps.domain.constants import ENTITY_CONFIG
-from steps.domain.entity_defaults import BaseEntityDefaults
+from steps.domain.defaults import BaseEntityDefaults
 from steps.utils import entity_to_model_name, normalize_entity_name
 from steps.domain.user_steps import create_users_from_table
 
