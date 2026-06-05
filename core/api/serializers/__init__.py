@@ -9,6 +9,7 @@ from .meeting import (
     MeetingSerializer,
     MeetingUserAssocSerializer,
 )
+from .note import NoteSerializer
 from .task import TaskSerializer
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     "MeetingContactAssocSerializer",
     "MeetingSerializer",
     "MeetingUserAssocSerializer",
+    "NoteSerializer",
     "TaskSerializer",
 ]

@@ -12,6 +12,7 @@ from .models import (
     Meeting,
     MeetingContactAssoc,
     MeetingUserAssoc,
+    Note,
     Task,
     UserProfile,
 )
@@ -302,3 +303,45 @@ class CallAdmin(admin.ModelAdmin):
         ),
         ("Outcome", {"fields": ("outcome", "summary")}),
     )
+
+
+@admin.register(Note)
+class NoteAdmin(admin.ModelAdmin):
+    """Admin interface for Note model."""
+
+    list_display = (
+        "get_title_or_body_preview",
+        "author",
+        "visibility",
+        "is_pinned",
+        "created_at",
+    )
+    list_filter = ("visibility", "is_pinned", "author", "is_invalid", "created_at")
+    search_fields = ("title", "body")
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+    fieldsets = (
+        ("Identity", {"fields": ("id", "author")}),
+        ("Content", {"fields": ("title", "body")}),
+        ("Relationships", {"fields": ("account", "contact", "deal")}),
+        ("Visibility", {"fields": ("visibility", "is_pinned")}),
+        (
+            "Audit",
+            {
+                "fields": (
+                    "is_invalid",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                )
+            },
+        ),
+    )
+
+    def get_title_or_body_preview(self, obj):
+        """Display title if present, otherwise show first 50 chars of body."""
+        if obj.title:
+            return obj.title
+        return obj.body[:50] + "..." if len(obj.body) > 50 else obj.body
+
+    get_title_or_body_preview.short_description = "Note"
