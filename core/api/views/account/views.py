@@ -86,7 +86,8 @@ class AccountViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
 
     def perform_create(self, serializer):
         """Delegate account creation to service."""
-        AccountService.create_account(serializer.validated_data, self.request.user)
+        account = AccountService.create_account(serializer.validated_data, self.request.user)
+        serializer.instance = account
 
     def perform_update(self, serializer):
         """Delegate account update to service."""

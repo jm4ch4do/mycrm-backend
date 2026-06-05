@@ -103,7 +103,8 @@ class DealViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancestors
 
     def perform_create(self, serializer):
         """Delegate deal creation to service."""
-        DealService.create_deal(serializer.validated_data, self.request.user)
+        deal = DealService.create_deal(serializer.validated_data, self.request.user)
+        serializer.instance = deal
 
     def perform_update(self, serializer):
         """Delegate deal update to service."""

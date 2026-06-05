@@ -1,6 +1,8 @@
 """Given steps: authentication, direct-DB entity creation, and API creation."""
 
 import json
+from types import SimpleNamespace
+
 from behave import given
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -304,7 +306,13 @@ def step_create_entities(context, entity):
         assert (
             response.status_code == 201
         ), f"Failed to create {entity}: {response.content}"
-        created_list.append(response.json())
+        created_obj = response.json()
+        created_list.append(created_obj)
+        
+        # Store the last created object as singular attribute (e.g., context.account)
+        # This allows URL placeholders like {account.id} to work
+        entity_singular = entity.rstrip('s')  # Simple pluralization removal
+        setattr(context, entity_singular, SimpleNamespace(**created_obj))
 
     context.response = response
 
@@ -371,4 +379,79 @@ def step_generate_multiple_entities(context, count, entity, field=None, value=No
         ), f"Failed to create {entity}: {response.content}"
         created_list.append(response.json())
 
+    context.response = response
+
+
+@given('I create "{count}" "{entity}" for "{parent_entity}" "{parent_value}"')
+def step_create_multiple_entities_for_parent(context, count, entity, parent_entity, parent_value):
+    """
+    Create multiple entities for a specific parent entity.
+    
+    Uses auto-generated default values for each entity, with all linked to the specified parent.
+    
+    Examples:
+        Given I create "25" tasks for account "Test Corp"
+        Given I create "10" notes for contact "John Doe"
+    """
+    entity = normalize_entity_name(entity)
+    parent_entity = normalize_entity_name(parent_entity)
+    
+    if entity not in ENTITY_CONFIG:
+        raise ValueError(f"Unknown entity type: {entity}. Add it to ENTITY_CONFIG.")
+    
+    count = int(count)
+    
+    # Determine the foreign key field name (e.g., "account_id" for parent "account")
+    parent_singular = parent_entity.rstrip('s')
+    fk_field = f"{parent_singular}_id"
+    
+    # Get entity configuration and defaults handler
+    config = ENTITY_CONFIG[entity]
+    context_attr = config["context_attr"]
+    endpoint = config["endpoint"]
+    defaults_class = config["defaults_class"]
+    
+    if not hasattr(context, context_attr):
+        setattr(context, context_attr, [])
+    
+    created_list = getattr(context, context_attr)
+    
+    # Create the specified number of entities
+    for i in range(count):
+        # Generate defaults
+        row_data = {fk_field: parent_value}
+        complete_data = defaults_class.prepare_entity_data(row_data)
+        
+        # Add a unique title/name to avoid duplicates
+        if 'title' in complete_data:
+            complete_data['title'] = f"{complete_data.get('title', 'Item')} {i+1}"
+        elif 'name' in complete_data:
+            complete_data['name'] = f"{complete_data.get('name', 'Item')} {i+1}"
+        
+        owner_username = complete_data.pop("owner_username", None)
+        author_username = complete_data.pop("author_username", None)
+        
+        # Get or create user
+        if author_username:
+            user = defaults_class.get_or_create_user(context, author_username)
+        elif owner_username:
+            user = defaults_class.get_or_create_user(context, owner_username)
+        else:
+            user = context.test_user
+        
+        context.client.force_login(user)
+        
+        # Create via API
+        response = context.client.post(
+            endpoint,
+            data=json.dumps(complete_data),
+            content_type="application/json",
+        )
+        
+        assert (
+            response.status_code == 201
+        ), f"Failed to create {entity}: {response.content}"
+        
+        created_list.append(response.json())
+    
     context.response = response

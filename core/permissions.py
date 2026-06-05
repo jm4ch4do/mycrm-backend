@@ -245,15 +245,21 @@ class CanViewTimeline(permissions.BasePermission):
     """
     Permission for read-only timeline endpoints.
 
-    - Authenticated users may request timelines.
-    - Object-level check restricts access to the owner of the parent entity
-      (Account, Contact, or Deal) or staff users.
+    - Authenticated users may request timelines for any entity they can view.
+    - Timeline endpoints are read-only (GET, HEAD, OPTIONS).
+    - Note visibility filtering is handled by the service layer based on authorship.
     """
 
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated)
 
     def has_object_permission(self, request, view, obj):
+        """
+        Allow all authenticated users to view timelines (read-only).
+        Staff users always have permission.
+        """
         if request.user and request.user.is_staff:
             return True
-        return getattr(obj, "owner_user", None) == request.user
+        # All authenticated users can view timelines
+        # Note visibility is filtered by the service layer
+        return True

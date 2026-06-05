@@ -78,7 +78,8 @@ class ContactViewSet(viewsets.ModelViewSet):  # pylint: disable=too-many-ancesto
 
     def perform_create(self, serializer):
         """Delegate contact creation to service."""
-        ContactService.create_contact(serializer.validated_data, self.request.user)
+        contact = ContactService.create_contact(serializer.validated_data, self.request.user)
+        serializer.instance = contact
 
     def perform_update(self, serializer):
         """Delegate contact update to service."""
