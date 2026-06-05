@@ -87,7 +87,7 @@ def step_verify_accounts_in_response(context):
         assert found, f"Account not found in response: {expected}"
 
 
-@then('the first "{entity}" should have {field} "{expected_value}"')
+@then('the first "{entity}" should have "{field}" "{expected_value}"')
 def step_verify_first_entity_field(context, entity, field, expected_value):
     """
     Verify a field value of the first entity in the response list.
@@ -96,8 +96,8 @@ def step_verify_first_entity_field(context, entity, field, expected_value):
     Works with both flat list and paginated responses.
 
     Examples:
-        Then the first "account" should have name "Acme Corp"
-        Then the first "deal" should have stage "proposal"
+        Then the first "account" should have "name" "Acme Corp"
+        Then the first "deal" should have "stage" "proposal"
     """
     entity = normalize_entity_name(entity)
 
@@ -159,7 +159,7 @@ def step_verify_account_details(context):
             for key, expected_value in row.items():
                 actual_value = data.get(key)
                 assert (
-                    actual_value == expected_value
+                    str(actual_value) == expected_value
                 ), f"Expected {key}='{expected_value}', got '{actual_value}'"
 
 

@@ -31,7 +31,7 @@ Feature: Account CRUD Operations
             | status | eq       | active |
 
         Then the response status code is "200" and contains "1" records
-        And the first "account" should have name "Active Co"
+        And the first "account" should have "name" "Active Co"
 
     Scenario: Update account status
         Given I create a new "account"

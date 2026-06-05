@@ -42,7 +42,7 @@ Feature: Activity CRUD Operations
             | field  | operator | value     |
             | status | eq       | completed |
         Then the response status code is "200" and contains "1" records
-        And the first "activity" should have title "Done Task"
+        And the first "activity" should have "title" "Done Task"
 
     Scenario: Filter activities by account
         Given I create "accounts" through the API

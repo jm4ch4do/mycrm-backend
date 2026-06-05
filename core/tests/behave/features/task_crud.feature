@@ -31,7 +31,7 @@ Feature: Task CRUD Operations
             | field | operator | value |
             | state | eq       | open  |
         Then the response status code is "200" and contains "1" records
-        And the first "task" should have title "Open task"
+        And the first "task" should have "title" "Open task"
 
     Scenario: Filter tasks by priority
         Given I create a new "task"
@@ -43,7 +43,7 @@ Feature: Task CRUD Operations
             | field    | operator | value |
             | priority | eq       | high  |
         Then the response status code is "200" and contains "1" records
-        And the first "task" should have title "High prio"
+        And the first "task" should have "title" "High prio"
 
     Scenario: Filter tasks by category
         Given I create a new "task"
@@ -54,7 +54,7 @@ Feature: Task CRUD Operations
             | field    | operator | value |
             | category | eq       | admin |
         Then the response status code is "200" and contains "1" records
-        And the first "task" should have title "Admin task"
+        And the first "task" should have "title" "Admin task"
 
     Scenario: Retrieve single task details
         Given I create a new "task"
