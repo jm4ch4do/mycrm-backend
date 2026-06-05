@@ -1,5 +1,6 @@
 from .account import Account, AccountStatus, AccountType, CompanySize
 from .activity import Activity, ActivityStatus, ActivityType
+from .call import Call, CallDirection, CallOutcome
 from .contact import Contact, ContactRole, ContactSeniority, PreferredChannel
 from .deal import (
     Currency,
@@ -21,6 +22,9 @@ __all__ = [
     "AccountStatus",
     "AccountType",
     "CompanySize",
+    "Call",
+    "CallDirection",
+    "CallOutcome",
     "Contact",
     "ContactRole",
     "ContactSeniority",
