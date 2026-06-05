@@ -11,6 +11,7 @@ from .meeting import (
 )
 from .note import NoteSerializer
 from .task import TaskSerializer
+from .timeline import TimelineItemSerializer
 
 __all__ = [
     "AccountSerializer",
@@ -26,4 +27,5 @@ __all__ = [
     "MeetingUserAssocSerializer",
     "NoteSerializer",
     "TaskSerializer",
+    "TimelineItemSerializer",
 ]
