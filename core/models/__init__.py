@@ -11,6 +11,7 @@ from .deal import (
     LeadSource,
 )
 from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
+from .note import Note, NoteVisibility
 from .task import Task, TaskCategory, TaskPriority, TaskState
 from .user_profile import UserProfile, UserRole
 
@@ -39,6 +40,8 @@ __all__ = [
     "MeetingContactAssoc",
     "MeetingOutcome",
     "MeetingUserAssoc",
+    "Note",
+    "NoteVisibility",
     "Task",
     "TaskCategory",
     "TaskPriority",
