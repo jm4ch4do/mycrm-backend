@@ -2,6 +2,8 @@
 Then steps for verifying responses and entity states.
 """
 
+from datetime import datetime
+
 from behave import then
 
 from steps.domain.constants import ENTITY_CONFIG
@@ -253,3 +255,30 @@ def step_every_item_has_field(context, field):
     assert len(items) > 0, "Response contains no items."
     for item in items:
         assert field in item, f"Item missing field '{field}': {item}"
+
+
+@then('the response is ordered by "{field}" descending')
+def step_response_ordered_by_field_desc(context, field):
+    """Assert response items are ordered descending by a given field.
+
+    Works with both flat list responses and paginated responses with
+    a top-level "results" key.
+    """
+    data = context.response_data
+    items = data["results"] if isinstance(data, dict) and "results" in data else data
+    assert len(items) > 0, "Response contains no items."
+
+    values = []
+    for item in items:
+        assert field in item, f"Item missing field '{field}': {item}"
+        value = item[field]
+
+        if isinstance(value, str) and field.endswith("_at"):
+            # Handle ISO timestamps, including trailing Z.
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+        values.append(value)
+
+    assert values == sorted(values, reverse=True), (
+        f"Response is not ordered by '{field}' descending. Values: {values}"
+    )
