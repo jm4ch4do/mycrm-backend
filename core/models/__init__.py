@@ -10,6 +10,7 @@ from .deal import (
     DealStatus,
     LeadSource,
 )
+from .event import Event, EventSourceService
 from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
 from .note import Note, NoteVisibility
 from .task import Task, TaskCategory, TaskPriority, TaskState
@@ -36,6 +37,8 @@ __all__ = [
     "DealStage",
     "DealStatus",
     "LeadSource",
+    "Event",
+    "EventSourceService",
     "Meeting",
     "MeetingContactAssoc",
     "MeetingOutcome",
