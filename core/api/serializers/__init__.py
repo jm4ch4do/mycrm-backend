@@ -3,6 +3,7 @@ from .activity import ActivitySerializer
 from .call import CallCompleteSerializer, CallSerializer
 from .contact import ContactSerializer
 from .deal import DealContactAssocSerializer, DealSerializer
+from .event import EventSerializer
 from .meeting import (
     MeetingCompleteSerializer,
     MeetingContactAssocSerializer,
@@ -21,6 +22,7 @@ __all__ = [
     "ContactSerializer",
     "DealContactAssocSerializer",
     "DealSerializer",
+    "EventSerializer",
     "MeetingCompleteSerializer",
     "MeetingContactAssocSerializer",
     "MeetingSerializer",

@@ -9,6 +9,7 @@ from .models import (
     Contact,
     Deal,
     DealContactAssoc,
+    Event,
     Meeting,
     MeetingContactAssoc,
     MeetingUserAssoc,
@@ -345,3 +346,43 @@ class NoteAdmin(admin.ModelAdmin):
         return obj.body[:50] + "..." if len(obj.body) > 50 else obj.body
 
     get_title_or_body_preview.short_description = "Note"
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    """Read-only admin interface for immutable Event model."""
+
+    list_display = (
+        "event_type",
+        "source_service",
+        "entity_type",
+        "entity_id",
+        "occurred_at",
+        "emitted_by_user_id",
+    )
+    list_filter = ("source_service", "entity_type", "event_type")
+    search_fields = ("event_type", "entity_type", "entity_id")
+    ordering = ("-occurred_at",)
+    readonly_fields = (
+        "id",
+        "event_type",
+        "source_service",
+        "entity_type",
+        "entity_id",
+        "before_state",
+        "after_state",
+        "metadata",
+        "occurred_at",
+        "emitted_by_user_id",
+        "created_at",
+        "created_by",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

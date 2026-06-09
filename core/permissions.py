@@ -263,3 +263,29 @@ class CanViewTimeline(permissions.BasePermission):
         # All authenticated users can view timelines
         # Note visibility is filtered by the service layer
         return True
+
+
+class CanViewEvents(permissions.BasePermission):
+    """Permission for read-only event endpoints.
+
+    - list: admin/staff users only (full event log)
+    - retrieve: any authenticated user
+    """
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+
+        action = getattr(view, "action", None)
+        if action == "list":
+            return bool(request.user.is_staff)
+
+        if action == "retrieve":
+            return True
+
+        # For unsupported methods (create/update/delete), allow the request to
+        # reach the viewset so DRF can return 405 Method Not Allowed.
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        return bool(request.user and request.user.is_authenticated)
