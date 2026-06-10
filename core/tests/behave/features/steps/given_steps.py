@@ -308,6 +308,8 @@ def step_create_entities(context, entity):
         ), f"Failed to create {entity}: {response.content}"
         created_obj = response.json()
         created_list.append(created_obj)
+        context.response = response
+        context.response_data = created_obj
         
         # Store the last created object as singular attribute (e.g., context.account)
         # This allows URL placeholders like {account.id} to work
@@ -315,6 +317,7 @@ def step_create_entities(context, entity):
         setattr(context, entity_singular, SimpleNamespace(**created_obj))
 
     context.response = response
+    context.response_data = created_obj
 
 
 @given('I generate "{count}" "{entity}" through the API')

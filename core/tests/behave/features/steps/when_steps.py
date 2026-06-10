@@ -31,10 +31,13 @@ def step_send_request_to_endpoint(context, method, endpoint):
             | status | eq       | active |
 
     For POST/PUT/PATCH requests an optional data table supplies the request
-    body as field/value pairs:
+    body as field/value pairs. JSON values are automatically parsed:
         When I send a "PUT" request to "/users/{targetuser.id}/"
             | field | value   |
             | role  | manager |
+        When I send a "POST" request to "/rules/{rule.id}/evaluate/"
+            | field          | value                  |
+            | event_payload  | {"stage": "qualified"} |
 
     Supported query-param operators (GET only):
         eq (or equals), ne, lt, gt, lte, gte, in, contains, icontains,
@@ -51,7 +54,18 @@ def step_send_request_to_endpoint(context, method, endpoint):
     else:
         # For write methods, use the step's own table as the request body.
         if hasattr(context, "table") and context.table:
-            body = {row["field"]: row["value"] for row in context.table}
+            body = {}
+            for row in context.table:
+                field = row["field"]
+                value = row["value"]
+                # Try to parse JSON values (objects, arrays, booleans, null)
+                if value.startswith('{') or value.startswith('[') or value.lower() in ('true', 'false', 'null'):
+                    try:
+                        body[field] = json.loads(value)
+                    except (json.JSONDecodeError, ValueError):
+                        body[field] = value
+                else:
+                    body[field] = value
         else:
             body = getattr(context, "request_data", {})
 

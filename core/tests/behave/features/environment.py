@@ -11,7 +11,7 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client
 
-from core.models import Activity, Contact, Deal, DealContactAssoc, Event, Task
+from core.models import Activity, Contact, Deal, DealContactAssoc, Event, Rule, Task
 
 
 def clear_test_data():
@@ -39,6 +39,7 @@ def clear_test_data():
     Deal.objects.all().delete()
     Contact.objects.all().delete()
     Event.objects.all().delete()
+    Rule.objects.all().delete()
 
     # Get all models from all apps
     all_models = apps.get_models()
@@ -53,6 +54,7 @@ def clear_test_data():
             "Deal",
             "DealContactAssoc",
             "Event",
+            "Rule",
             "Task",
         ]:
             model.objects.all().delete()

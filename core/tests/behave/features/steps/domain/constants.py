@@ -9,6 +9,7 @@ from steps.domain.defaults import (
     EventDefaults,
     MeetingDefaults,
     NoteDefaults,
+    RuleDefaults,
     TaskDefaults,
     TriggerDefaults,
 )
@@ -58,6 +59,12 @@ ENTITY_CONFIG = {
         "endpoint": "/notes/",
         "context_attr": "created_notes",
         "defaults_class": NoteDefaults,
+    },
+    "rules": {
+        "endpoint": "/rules/",
+        "context_attr": "created_rules",
+        "defaults_class": RuleDefaults,
+        "db_create": RuleDefaults.db_create,
     },
     "tasks": {
         "endpoint": "/tasks/",
