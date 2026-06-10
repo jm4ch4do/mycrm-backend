@@ -11,6 +11,7 @@ from core.api.views.meeting import MeetingViewSet
 from core.api.views.note import NoteViewSet
 from core.api.views.task import TaskViewSet
 from core.api.views.timeline import TimelineViewSet
+from core.api.views.rule import RuleViewSet
 from core.api.views.trigger import TriggerViewSet
 from core.api.views.user import CurrentUserView, UserViewSet
 
@@ -24,6 +25,7 @@ router.register(r"events", EventViewSet, basename="event")
 router.register(r"meetings", MeetingViewSet, basename="meeting")
 router.register(r"notes", NoteViewSet, basename="note")
 router.register(r"tasks", TaskViewSet, basename="task")
+router.register(r"rules", RuleViewSet, basename="rule")
 router.register(r"triggers", TriggerViewSet, basename="trigger")
 router.register(r"users", UserViewSet, basename="user")
 

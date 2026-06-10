@@ -14,6 +14,7 @@ from .models import (
     MeetingContactAssoc,
     MeetingUserAssoc,
     Note,
+    Rule,
     Task,
     Trigger,
     UserProfile,
@@ -425,7 +426,7 @@ class TriggerAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Lifecycle", {"fields": ("is_active", "is_invalid")}),
+        ("Lifecycle", {"fields": ("is_active", "is_invalid")} ),
         (
             "Audit",
             {
@@ -438,3 +439,21 @@ class TriggerAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(Rule)
+class RuleAdmin(admin.ModelAdmin):
+    """Admin interface for Rule model."""
+
+    list_display = (
+        "name",
+        "trigger",
+        "evaluation_order",
+        "is_active",
+        "is_invalid",
+        "created_at",
+    )
+    list_filter = ("is_active", "is_invalid", "trigger")
+    search_fields = ("name", "trigger__name")
+    ordering = ("evaluation_order", "created_at")
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")

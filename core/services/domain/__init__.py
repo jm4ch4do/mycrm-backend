@@ -10,6 +10,7 @@ from .meeting_service import MeetingService
 from .note_service import NoteService
 from .task_service import TaskService
 from .timeline_service import TimelineService
+from .rule_service import RuleEvaluationError, RuleService
 from .trigger_service import TriggerService
 
 __all__ = [
@@ -24,4 +25,6 @@ __all__ = [
     "TaskService",
     "TimelineService",
     "TriggerService",
+    "RuleService",
+    "RuleEvaluationError",
 ]
