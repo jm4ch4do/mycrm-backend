@@ -15,6 +15,7 @@ from .models import (
     MeetingUserAssoc,
     Note,
     Task,
+    Trigger,
     UserProfile,
 )
 
@@ -386,3 +387,54 @@ class EventAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Trigger)
+class TriggerAdmin(admin.ModelAdmin):
+    """Admin interface for Trigger model."""
+
+    list_display = (
+        "name",
+        "event_type",
+        "entity_type",
+        "is_active",
+        "is_invalid",
+        "updated_at",
+    )
+    list_filter = ("event_type", "entity_type", "is_active", "is_invalid")
+    search_fields = ("name", "description", "event_type", "entity_type")
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+    fieldsets = (
+        (
+            "Identity",
+            {
+                "fields": (
+                    "id",
+                    "name",
+                    "description",
+                )
+            },
+        ),
+        (
+            "Matching",
+            {
+                "fields": (
+                    "event_type",
+                    "entity_type",
+                    "conditions",
+                )
+            },
+        ),
+        ("Lifecycle", {"fields": ("is_active", "is_invalid")}),
+        (
+            "Audit",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                )
+            },
+        ),
+    )

@@ -10,6 +10,7 @@ from .meeting_service import MeetingService
 from .note_service import NoteService
 from .task_service import TaskService
 from .timeline_service import TimelineService
+from .trigger_service import TriggerService
 
 __all__ = [
     "AccountService",
@@ -22,4 +23,5 @@ __all__ = [
     "NoteService",
     "TaskService",
     "TimelineService",
+    "TriggerService",
 ]

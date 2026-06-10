@@ -13,6 +13,7 @@ from .meeting import (
 from .note import NoteSerializer
 from .task import TaskSerializer
 from .timeline import TimelineItemSerializer
+from .trigger import TriggerSerializer
 
 __all__ = [
     "AccountSerializer",
@@ -30,4 +31,5 @@ __all__ = [
     "NoteSerializer",
     "TaskSerializer",
     "TimelineItemSerializer",
+    "TriggerSerializer",
 ]
