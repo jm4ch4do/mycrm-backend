@@ -14,6 +14,7 @@ from .event import Event, EventSourceService
 from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
 from .note import Note, NoteVisibility
 from .task import Task, TaskCategory, TaskPriority, TaskState
+from .rule import Rule
 from .trigger import Trigger
 from .user_profile import UserProfile, UserRole
 
@@ -50,6 +51,7 @@ __all__ = [
     "TaskCategory",
     "TaskPriority",
     "TaskState",
+    "Rule",
     "Trigger",
     "UserProfile",
     "UserRole",
