@@ -10,6 +10,7 @@ from steps.domain.defaults.event import EventDefaults
 from steps.domain.defaults.meeting import MeetingDefaults
 from steps.domain.defaults.note import NoteDefaults
 from steps.domain.defaults.task import TaskDefaults
+from steps.domain.defaults.trigger import TriggerDefaults
 
 __all__ = [
     "BaseEntityDefaults",
@@ -22,4 +23,5 @@ __all__ = [
     "MeetingDefaults",
     "NoteDefaults",
     "TaskDefaults",
+    "TriggerDefaults",
 ]

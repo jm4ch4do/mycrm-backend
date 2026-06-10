@@ -10,6 +10,7 @@ from steps.domain.defaults import (
     MeetingDefaults,
     NoteDefaults,
     TaskDefaults,
+    TriggerDefaults,
 )
 
 # Per-entity step configuration: endpoint URL, context attribute, defaults
@@ -63,5 +64,10 @@ ENTITY_CONFIG = {
         "context_attr": "created_tasks",
         "defaults_class": TaskDefaults,
         "db_create": TaskDefaults.db_create,
+    },
+    "triggers": {
+        "endpoint": "/triggers/",
+        "context_attr": "created_triggers",
+        "defaults_class": TriggerDefaults,
     },
 }
