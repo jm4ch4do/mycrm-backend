@@ -2,6 +2,7 @@
 
 from steps.domain.defaults.account import AccountDefaults
 from steps.domain.defaults.activity import ActivityDefaults
+from steps.domain.defaults.action import ActionDefaults
 from steps.domain.defaults.base import BaseEntityDefaults
 from steps.domain.defaults.call import CallDefaults
 from steps.domain.defaults.contact import ContactDefaults
@@ -18,6 +19,7 @@ __all__ = [
     "BaseEntityDefaults",
     "AccountDefaults",
     "ActivityDefaults",
+    "ActionDefaults",
     "CallDefaults",
     "ContactDefaults",
     "DealDefaults",

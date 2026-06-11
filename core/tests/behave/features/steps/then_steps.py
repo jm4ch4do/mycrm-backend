@@ -248,7 +248,10 @@ def step_verify_entity_not_in_list(context, entity, field, value):
 
     response = context.client.get(endpoint)
     data = response.json()
-    results = data.get("results", data)
+    if isinstance(data, dict):
+        results = data.get("results", data)
+    else:
+        results = data
 
     found = any(item.get(field) == value for item in results)
     assert not found, f"{entity} with {field}='{value}' should not appear in the list"
@@ -297,6 +300,24 @@ def step_response_ordered_by_field_desc(context, field):
 
     assert values == sorted(values, reverse=True), (
         f"Response is not ordered by '{field}' descending. Values: {values}"
+    )
+
+
+@then('the execution result status is "{status_value}"')
+def step_execution_result_status(context, status_value):
+    """Assert execution result has the expected status."""
+    assert context.execution_result is not None, "Expected execution_result to be set."
+    assert context.execution_result.get("status") == status_value, (
+        f"Expected status '{status_value}', got '{context.execution_result.get('status')}'"
+    )
+
+
+@then("no exception is raised")
+def step_no_exception_raised(context):
+    """Assert no exception was captured by the previous step."""
+    assert getattr(context, "captured_exception", None) is None, (
+        "Expected no exception, but one was captured: "
+        f"{getattr(context, 'captured_exception', None)}"
     )
 
 

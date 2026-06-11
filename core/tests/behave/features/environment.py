@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client
 
 from core.models import (
+    Action,
     Activity,
     Contact,
     Deal,
@@ -51,6 +52,7 @@ def clear_test_data():
     Event.objects.all().delete()
     Rule.objects.all().delete()
     WorkflowStep.objects.all().delete()
+    Action.objects.all().delete()
     Workflow.objects.all().delete()
 
     # Get all models from all apps
@@ -68,6 +70,7 @@ def clear_test_data():
             "Event",
             "Rule",
             "Task",
+            "Action",
             "Workflow",
             "WorkflowStep",
         ]:

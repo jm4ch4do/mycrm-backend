@@ -3,6 +3,7 @@
 from steps.domain.defaults import (
     AccountDefaults,
     ActivityDefaults,
+    ActionDefaults,
     CallDefaults,
     ContactDefaults,
     DealDefaults,
@@ -18,6 +19,12 @@ from steps.domain.defaults import (
 # Per-entity step configuration: endpoint URL, context attribute, defaults
 # class, and an optional db_create factory for direct-DB creation.
 ENTITY_CONFIG = {
+    "actions": {
+        "endpoint": "/actions/",
+        "context_attr": "created_actions",
+        "defaults_class": ActionDefaults,
+        "db_create": ActionDefaults.db_create,
+    },
     "accounts": {
         "endpoint": "/accounts/",
         "context_attr": "created_accounts",
