@@ -10,8 +10,8 @@ from django.utils import timezone
 from core.models import Action, Trigger, Workflow, WorkflowStep
 
 
-@pytest.fixture
-def trigger(db):
+@pytest.fixture(name="trigger")
+def trigger_fixture(db):
     """A minimal trigger for workflow attachment."""
     return Trigger.objects.create(
         name="Deal Stage Trigger",
@@ -19,8 +19,8 @@ def trigger(db):
     )
 
 
-@pytest.fixture
-def action(db):
+@pytest.fixture(name="action")
+def action_fixture(db):
     """A minimal action for workflow step attachment."""
     return Action.objects.create(
         name="Send Email",

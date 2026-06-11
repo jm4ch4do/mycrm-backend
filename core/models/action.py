@@ -17,8 +17,5 @@ class Action(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
 
-    class Meta:
-        pass
-
     def __str__(self) -> str:
-        return self.name
+        return f"{self.name}"
