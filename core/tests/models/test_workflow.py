@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
-from core.models import Action, Trigger, Workflow, WorkflowStep
+from core.models import Action, ActionType, Trigger, Workflow, WorkflowStep
 
 
 @pytest.fixture(name="trigger")
@@ -24,6 +24,7 @@ def action_fixture(db):
     """A minimal action for workflow step attachment."""
     return Action.objects.create(
         name="Send Email",
+        action_type=ActionType.CREATE_TASK,
     )
 
 

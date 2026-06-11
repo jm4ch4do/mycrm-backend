@@ -3,7 +3,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from core.models import Action, ExecutionLog, Trigger, Workflow, WorkflowStep
+from core.models import Action, ActionType, ExecutionLog, Trigger, Workflow, WorkflowStep
 from core.services.domain.workflow_service import WorkflowInactiveError, WorkflowService
 
 
@@ -25,13 +25,13 @@ def trigger_fixture(db):
 @pytest.fixture(name="action")
 def action_fixture(db):
     """A test action."""
-    return Action.objects.create(name="Send Email")
+    return Action.objects.create(name="Send Email", action_type=ActionType.CREATE_TASK)
 
 
 @pytest.fixture(name="action2")
 def action2_fixture(db):
     """A second test action."""
-    return Action.objects.create(name="Create Task")
+    return Action.objects.create(name="Create Task", action_type=ActionType.CREATE_TASK)
 
 
 @pytest.mark.django_db

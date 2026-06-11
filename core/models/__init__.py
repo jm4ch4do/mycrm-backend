@@ -1,6 +1,6 @@
 from .account import Account, AccountStatus, AccountType, CompanySize
 from .activity import Activity, ActivityStatus, ActivityType
-from .action import Action
+from .action import Action, ActionType
 from .call import Call, CallDirection, CallOutcome
 from .contact import Contact, ContactRole, ContactSeniority, PreferredChannel
 from .deal import (
@@ -29,6 +29,7 @@ __all__ = [
     "AccountStatus",
     "AccountType",
     "Action",
+    "ActionType",
     "CompanySize",
     "Call",
     "CallDirection",

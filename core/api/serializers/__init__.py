@@ -1,5 +1,6 @@
 from .account import AccountSerializer
 from .activity import ActivitySerializer
+from .action import ActionSerializer
 from .call import CallCompleteSerializer, CallSerializer
 from .contact import ContactSerializer
 from .deal import DealContactAssocSerializer, DealSerializer
@@ -19,6 +20,7 @@ from .workflow import WorkflowSerializer, WorkflowStepSerializer
 __all__ = [
     "AccountSerializer",
     "ActivitySerializer",
+    "ActionSerializer",
     "CallCompleteSerializer",
     "CallSerializer",
     "ContactSerializer",

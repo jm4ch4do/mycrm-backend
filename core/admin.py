@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import (
     Account,
+    Action,
     Activity,
     Call,
     Contact,
@@ -42,6 +43,17 @@ class UserAdmin(BaseUserAdmin):
     """Extended User admin with CRM profile inline."""
 
     inlines = [UserProfileInline]
+
+
+@admin.register(Action)
+class ActionAdmin(admin.ModelAdmin):
+    """Admin interface for Action model."""
+
+    list_display = ("name", "action_type", "timeout_seconds", "is_invalid", "created_at")
+    list_filter = ("action_type", "is_invalid")
+    search_fields = ("name", "action_type")
+    ordering = ("-created_at",)
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
 
 
 @admin.register(Account)
