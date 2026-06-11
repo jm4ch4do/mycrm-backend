@@ -1,5 +1,6 @@
 from .account import Account, AccountStatus, AccountType, CompanySize
 from .activity import Activity, ActivityStatus, ActivityType
+from .action import Action
 from .call import Call, CallDirection, CallOutcome
 from .contact import Contact, ContactRole, ContactSeniority, PreferredChannel
 from .deal import (
@@ -11,12 +12,14 @@ from .deal import (
     LeadSource,
 )
 from .event import Event, EventSourceService
+from .execution_log import ExecutionLog
 from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
 from .note import Note, NoteVisibility
 from .task import Task, TaskCategory, TaskPriority, TaskState
 from .rule import Rule
 from .trigger import Trigger
 from .user_profile import UserProfile, UserRole
+from .workflow import Workflow, WorkflowStep
 
 __all__ = [
     "Activity",
@@ -25,6 +28,7 @@ __all__ = [
     "Account",
     "AccountStatus",
     "AccountType",
+    "Action",
     "CompanySize",
     "Call",
     "CallDirection",
@@ -41,6 +45,7 @@ __all__ = [
     "LeadSource",
     "Event",
     "EventSourceService",
+    "ExecutionLog",
     "Meeting",
     "MeetingContactAssoc",
     "MeetingOutcome",
@@ -55,4 +60,6 @@ __all__ = [
     "Trigger",
     "UserProfile",
     "UserRole",
+    "Workflow",
+    "WorkflowStep",
 ]
