@@ -18,6 +18,8 @@ from .models import (
     Task,
     Trigger,
     UserProfile,
+    Workflow,
+    WorkflowStep,
 )
 
 
@@ -457,3 +459,29 @@ class RuleAdmin(admin.ModelAdmin):
     search_fields = ("name", "trigger__name")
     ordering = ("evaluation_order", "created_at")
     readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+
+
+class WorkflowStepInline(admin.TabularInline):
+    """Inline admin for ordered workflow steps."""
+
+    model = WorkflowStep
+    extra = 0
+    ordering = ("step_order",)
+
+
+@admin.register(Workflow)
+class WorkflowAdmin(admin.ModelAdmin):
+    """Admin interface for Workflow model."""
+
+    list_display = (
+        "name",
+        "trigger",
+        "is_active",
+        "is_invalid",
+        "created_at",
+    )
+    list_filter = ("is_active", "is_invalid", "trigger")
+    search_fields = ("name", "trigger__name")
+    ordering = ("-created_at",)
+    readonly_fields = ("id", "created_at", "updated_at", "created_by", "updated_by")
+    inlines = [WorkflowStepInline]

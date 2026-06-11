@@ -3,6 +3,7 @@ from .contact import ContactViewSet
 from .deal import DealViewSet
 from .event import EventViewSet
 from .trigger import TriggerViewSet
+from .workflow import WorkflowViewSet
 
 __all__ = [
     "AccountViewSet",
@@ -10,4 +11,5 @@ __all__ = [
     "DealViewSet",
     "EventViewSet",
     "TriggerViewSet",
+    "WorkflowViewSet",
 ]

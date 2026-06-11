@@ -14,6 +14,7 @@ from .note import NoteSerializer
 from .task import TaskSerializer
 from .timeline import TimelineItemSerializer
 from .trigger import TriggerSerializer
+from .workflow import WorkflowSerializer, WorkflowStepSerializer
 
 __all__ = [
     "AccountSerializer",
@@ -32,4 +33,6 @@ __all__ = [
     "TaskSerializer",
     "TimelineItemSerializer",
     "TriggerSerializer",
+    "WorkflowSerializer",
+    "WorkflowStepSerializer",
 ]
