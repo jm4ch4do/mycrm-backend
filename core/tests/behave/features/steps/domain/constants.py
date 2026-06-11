@@ -12,6 +12,7 @@ from steps.domain.defaults import (
     RuleDefaults,
     TaskDefaults,
     TriggerDefaults,
+    WorkflowDefaults,
 )
 
 # Per-entity step configuration: endpoint URL, context attribute, defaults
@@ -76,5 +77,10 @@ ENTITY_CONFIG = {
         "endpoint": "/triggers/",
         "context_attr": "created_triggers",
         "defaults_class": TriggerDefaults,
+    },
+    "workflows": {
+        "endpoint": "/workflows/",
+        "context_attr": "created_workflows",
+        "defaults_class": WorkflowDefaults,
     },
 }

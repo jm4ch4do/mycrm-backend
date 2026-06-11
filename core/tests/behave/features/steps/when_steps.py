@@ -1,6 +1,7 @@
 """When steps for API requests and entity operations."""
 
 import json
+
 from behave import given, when
 from django.apps import apps
 
@@ -57,7 +58,7 @@ def step_send_request_to_endpoint(context, method, endpoint):
             body = {}
             for row in context.table:
                 field = row["field"]
-                value = row["value"]
+                value = _sutils.resolve_url_placeholders(row["value"], context)
                 # Try to parse JSON values (objects, arrays, booleans, null)
                 if value.startswith('{') or value.startswith('[') or value.lower() in ('true', 'false', 'null'):
                     try:
@@ -235,3 +236,6 @@ def step_soft_delete_entity(context, entity, field, value):
 
     response = context.client.delete(f"{endpoint}{instance.id}/")
     _sutils.response_to_context(context, response)
+
+
+

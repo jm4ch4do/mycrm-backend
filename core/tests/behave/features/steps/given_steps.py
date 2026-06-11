@@ -1,5 +1,6 @@
 """Given steps: authentication, direct-DB entity creation, and API creation."""
 
+import base64
 import json
 from types import SimpleNamespace
 
@@ -12,6 +13,11 @@ from steps.utils import entity_to_model_name, normalize_entity_name
 from steps.domain.user_steps import create_users_from_table
 
 user_model = get_user_model()
+
+
+def _set_basic_auth(context, username, password):
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    context.client.defaults["HTTP_AUTHORIZATION"] = f"Basic {token}"
 
 
 # ---------------------------------------------------------------------------
@@ -31,16 +37,27 @@ def step_auth(context, auth_state, auth=None):
     state = auth_state.strip().lower()
     if state == "not authenticated":
         context.client.logout()
+        context.client.defaults.pop("HTTP_AUTHORIZATION", None)
     elif state == "authenticated":
         target = (auth or "").strip().lower()
         if target in ("a staff user", "staff user"):
-            user = user_model.objects.create_user(
-                username="behave_staff", password="pass", is_staff=True
+            user, _ = user_model.objects.get_or_create(
+                username="behave_staff",
+                defaults={"is_staff": True},
             )
+            user.set_password("pass")
+            user.is_staff = True
+            user.save(update_fields=["password", "is_staff"])
+            _set_basic_auth(context, "behave_staff", "pass")
         elif target in ("a regular user", "regular user"):
-            user = user_model.objects.create_user(
-                username="behave_regular", password="pass"
+            user, _ = user_model.objects.get_or_create(
+                username="behave_regular",
+                defaults={"is_staff": False},
             )
+            user.set_password("pass")
+            user.is_staff = False
+            user.save(update_fields=["password", "is_staff"])
+            _set_basic_auth(context, "behave_regular", "pass")
         else:
             raise ValueError(f"Unknown auth target: '{auth}'")
         context.client.force_login(user)

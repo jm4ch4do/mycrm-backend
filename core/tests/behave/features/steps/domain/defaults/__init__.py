@@ -12,6 +12,7 @@ from steps.domain.defaults.note import NoteDefaults
 from steps.domain.defaults.rule import RuleDefaults
 from steps.domain.defaults.task import TaskDefaults
 from steps.domain.defaults.trigger import TriggerDefaults
+from steps.domain.defaults.workflow import WorkflowDefaults
 
 __all__ = [
     "BaseEntityDefaults",
@@ -26,4 +27,5 @@ __all__ = [
     "RuleDefaults",
     "TaskDefaults",
     "TriggerDefaults",
+    "WorkflowDefaults",
 ]

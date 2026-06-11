@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from core.models import Action, ExecutionLog, Trigger, Workflow, WorkflowStep
+from core.tasks import execute_workflow_task
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser as User
@@ -269,8 +270,6 @@ class WorkflowService:
             triggered_by=triggered_by,
         )
 
-        # Celery dispatch is wired in the next workflow execution integration step.
-        # from core.tasks import execute_workflow_task
-        # execute_workflow_task.delay(execution_log_id=str(execution_log.id))
+        execute_workflow_task.delay(execution_log_id=str(execution_log.id))
 
         return execution_log

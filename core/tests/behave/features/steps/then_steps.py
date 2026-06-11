@@ -187,26 +187,42 @@ def step_verify_entity_field_value(
 
 
 @then('the "{entity}" with "{field}" "{value}" has a related "{related}"')
-def step_verify_entity_has_related(context, entity, field, value, related):
+@then('the "{entity}" with "{field}" "{value}" has "{count}" related "{related}"')
+def step_verify_entity_has_related(context, entity, field, value, related, count=None):
     """
-    Verify that a related object exists on an entity.
+    Verify that a related object exists on an entity, optionally checking count.
 
-    Looks up the entity by field/value, then asserts that the named related
-    attribute is accessible (i.e. the related object exists).
+    Without count: asserts that the named related attribute exists and is not null.
+    With count: asserts that the related manager returns exactly that count.
 
-    Examples:
+    Examples (existence check):
         Then the "user" with "username" "roleuser" has a "profile"
         Then the "account" with "name" "Acme Corp" has a "contacts"
+
+    Examples (count check):
+        Then the "workflow" with "name" "Qualify Deal Workflow" has "1" related "workflow_steps"
+        Then the "account" with "name" "Acme Corp" has "5" related "contacts"
     """
     entity = normalize_entity_name(entity)
     model = resolve_model(entity)
     instance = model.objects.get(**{field: value})
-    try:
-        related_obj = getattr(instance, related)
-        if hasattr(related_obj, "pk"):
-            assert related_obj.pk is not None, f"'{related}' on {entity} has no pk"
-    except Exception as exc:
-        raise AssertionError(f"'{related}' does not exist on {entity}: {exc}") from exc
+
+    if count is not None:
+        # Count check: use reverse manager for related collection
+        related_manager = getattr(instance, related)
+        actual_count = related_manager.count()
+        expected_count = int(count)
+        assert actual_count == expected_count, (
+            f"Expected {expected_count} related '{related}', got {actual_count}"
+        )
+    else:
+        # Existence check: verify related attribute exists and is not null
+        try:
+            related_obj = getattr(instance, related)
+            if hasattr(related_obj, "pk"):
+                assert related_obj.pk is not None, f"'{related}' on {entity} has no pk"
+        except Exception as exc:
+            raise AssertionError(f"'{related}' does not exist on {entity}: {exc}") from exc
 
 
 @then('the "{entity}" with "{field}" "{value}" should not appear in the list')
@@ -281,4 +297,14 @@ def step_response_ordered_by_field_desc(context, field):
 
     assert values == sorted(values, reverse=True), (
         f"Response is not ordered by '{field}' descending. Values: {values}"
+    )
+
+
+@then('the captured exception is "{exception_name}"')
+def step_captured_exception_is(context, exception_name):
+    """Assert the previously captured exception class name."""
+    exc = getattr(context, "captured_exception", None)
+    assert exc is not None, "Expected an exception to be captured, but none was found."
+    assert exc.__class__.__name__ == exception_name, (
+        f"Expected exception '{exception_name}', got '{exc.__class__.__name__}'"
     )
