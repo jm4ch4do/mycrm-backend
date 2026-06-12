@@ -66,3 +66,12 @@ class ExecutionLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.workflow.name} ({self.status})"
+
+    @property
+    def triggered_by(self):
+        """Backward-compatible alias for created_by."""
+        return self.created_by
+
+    @triggered_by.setter
+    def triggered_by(self, value):
+        self.created_by = value

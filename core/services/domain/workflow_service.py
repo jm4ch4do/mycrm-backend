@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from core.models import Action, ExecutionLog, Trigger, Workflow, WorkflowStep
+from core.services.domain.execution_log_service import ExecutionLogService
 from core.tasks import execute_workflow_task
 
 if TYPE_CHECKING:
@@ -240,7 +241,7 @@ class WorkflowService:
         workflow: Workflow,
         event: Event,
         triggered_by: User | None = None,
-    ) -> ExecutionLog:
+    ) -> "ExecutionLog":
         """Execute a workflow asynchronously.
 
         Creates an ExecutionLog record immediately and dispatches a Celery task
@@ -263,11 +264,10 @@ class WorkflowService:
             )
 
         # Create execution log record
-        execution_log = ExecutionLog.objects.create(
+        execution_log = ExecutionLogService.create_execution_log(
             workflow=workflow,
             event=event,
-            status="pending",
-            triggered_by=triggered_by,
+            created_by=triggered_by,
         )
 
         execute_workflow_task.delay(execution_log_id=str(execution_log.id))
