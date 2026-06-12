@@ -11,6 +11,7 @@ from .models import (
     Deal,
     DealContactAssoc,
     Event,
+    ExecutionLog,
     Meeting,
     MeetingContactAssoc,
     MeetingUserAssoc,
@@ -390,6 +391,36 @@ class EventAdmin(admin.ModelAdmin):
         "metadata",
         "occurred_at",
         "emitted_by_user_id",
+        "created_at",
+        "created_by",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ExecutionLog)
+class ExecutionLogAdmin(admin.ModelAdmin):
+    """Read-only admin interface for ExecutionLog model."""
+
+    list_display = ("id", "workflow", "event", "status", "started_at", "finished_at")
+    list_filter = ("status", "workflow")
+    search_fields = ("workflow__name",)
+    ordering = ("-started_at",)
+    readonly_fields = (
+        "id",
+        "workflow",
+        "event",
+        "status",
+        "started_at",
+        "finished_at",
+        "logs",
         "created_at",
         "created_by",
     )

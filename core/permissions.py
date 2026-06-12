@@ -291,6 +291,27 @@ class CanViewEvents(permissions.BasePermission):
         return bool(request.user and request.user.is_authenticated)
 
 
+class CanViewExecutionLogs(permissions.BasePermission):
+    """Permission for read-only execution-log endpoints.
+
+    - list/retrieve: admin/staff users only
+    - unsupported write methods: allowed to reach the viewset so DRF returns 405
+    """
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+
+        action = getattr(view, "action", None)
+        if action in {"list", "retrieve"}:
+            return bool(request.user.is_staff)
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        return bool(request.user and request.user.is_staff)
+
+
 class CanManageTriggers(permissions.BasePermission):
     """Permission rules for trigger management endpoints.
 
