@@ -12,7 +12,7 @@ from .deal import (
     LeadSource,
 )
 from .event import Event, EventSourceService
-from .execution_log import ExecutionLog
+from .execution_log import ExecutionLog, ExecutionStatus
 from .meeting import Meeting, MeetingContactAssoc, MeetingOutcome, MeetingUserAssoc
 from .note import Note, NoteVisibility
 from .task import Task, TaskCategory, TaskPriority, TaskState
@@ -47,6 +47,7 @@ __all__ = [
     "Event",
     "EventSourceService",
     "ExecutionLog",
+    "ExecutionStatus",
     "Meeting",
     "MeetingContactAssoc",
     "MeetingOutcome",
