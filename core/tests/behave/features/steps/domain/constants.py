@@ -15,6 +15,7 @@ from steps.domain.defaults import (
     TriggerDefaults,
     WorkflowDefaults,
 )
+from steps.domain.defaults.execution_log import ExecutionLogDefaults
 
 # Per-entity step configuration: endpoint URL, context attribute, defaults
 # class, and an optional db_create factory for direct-DB creation.
@@ -56,6 +57,12 @@ ENTITY_CONFIG = {
         "context_attr": "created_events",
         "defaults_class": EventDefaults,
         "db_create": EventDefaults.db_create,
+    },
+    "execution_logs": {
+        "endpoint": "/executions/",
+        "context_attr": "created_execution_logs",
+        "defaults_class": ExecutionLogDefaults,
+        "db_create": ExecutionLogDefaults.db_create,
     },
     "meetings": {
         "endpoint": "/meetings/",

@@ -7,7 +7,23 @@ from datetime import datetime
 from behave import then
 
 from steps.domain.constants import ENTITY_CONFIG
-from steps.utils import normalize_entity_name, resolve_model
+from steps.utils import normalize_entity_name, resolve_model, resolve_table_value
+
+
+def _response_items(response_data):
+    if isinstance(response_data, dict) and "results" in response_data:
+        return response_data["results"]
+    return response_data
+
+
+def _resolve_item_value(item, field_path):
+    current = item
+    for part in field_path.split("."):
+        if isinstance(current, dict):
+            current = current.get(part)
+        else:
+            current = getattr(current, part)
+    return current
 
 # ---------------------------------------------------------------------------
 # Response status assertions
@@ -69,19 +85,20 @@ def step_verify_accounts_in_response(context):
             | Acme Corp | active |
             | Tech Co   | active |
     """
-    # Handle both list and paginated responses
-    if isinstance(context.response_data, dict) and "results" in context.response_data:
-        accounts = context.response_data["results"]
-    else:
-        accounts = context.response_data
+    accounts = _response_items(context.response_data)
 
     for row in context.table:
-        expected = {key: value for key, value in row.items()}
+        expected = {
+            key: resolve_table_value(value, context) for key, value in row.items()
+        }
 
         # Find matching account
         found = False
         for account in accounts:
-            match = all(account.get(key) == value for key, value in expected.items())
+            match = all(
+                str(_resolve_item_value(account, key)) == str(value)
+                for key, value in expected.items()
+            )
             if match:
                 found = True
                 break
@@ -119,9 +136,12 @@ def step_verify_account_details(context):
     if records is not None:
         # List response — each table row must match at least one record (order-independent)
         for row in context.table:
-            expected = dict(row.items())
+            expected = {
+                key: resolve_table_value(value, context)
+                for key, value in row.items()
+            }
             match = any(
-                all(str(record.get(k)) == v for k, v in expected.items())
+                all(str(_resolve_item_value(record, k)) == str(v) for k, v in expected.items())
                 for record in records
             )
             assert match, (
@@ -132,10 +152,25 @@ def step_verify_account_details(context):
         # Single-object response — check every row against the response object
         for row in context.table:
             for key, expected_value in row.items():
-                actual_value = data.get(key)
+                actual_value = _resolve_item_value(data, key)
+                expected_value = resolve_table_value(expected_value, context)
                 assert (
-                    str(actual_value) == expected_value
+                    str(actual_value) == str(expected_value)
                 ), f"Expected {key}='{expected_value}', got '{actual_value}'"
+
+
+@then('every item in the response has "{field}" "{expected}"')
+def step_every_item_in_response_has_field_value(context, field, expected):
+    """Assert every item in a list response has the expected field value."""
+    items = _response_items(context.response_data)
+    assert items, "Response contains no items."
+    expected = resolve_table_value(expected, context)
+
+    for item in items:
+        actual_value = _resolve_item_value(item, field)
+        assert str(actual_value) == str(expected), (
+            f"Expected every item to have {field}='{expected}', got '{actual_value}'"
+        )
 
 
 @then('the response contains field "{field}"')
@@ -183,6 +218,7 @@ def step_verify_entity_field_value(
 
     instance = model.objects.get(**{field: value})
     actual = str(getattr(instance, check_field))
+    expected = str(resolve_table_value(expected, context))
     assert actual == expected, f"Expected {check_field}='{expected}', got '{actual}'"
 
 

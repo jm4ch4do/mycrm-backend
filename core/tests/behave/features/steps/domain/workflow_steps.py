@@ -4,7 +4,7 @@ from behave import then, when
 
 from core.models import Event, ExecutionLog, Workflow
 from core.services.domain.workflow_service import WorkflowService
-from steps.utils import resolve_model
+from steps.utils import resolve_model, store_entity_on_context
 
 
 @when('I execute workflow "{workflow_name}" for event_type "{event_type}"')
@@ -17,21 +17,28 @@ def step_execute_workflow_for_event(context, workflow_name, event_type):
     For failed execution: context.captured_exception is set, context.execution_log is None.
     """
     workflow = Workflow.objects.get(name=workflow_name)
-    context.workflow = workflow
-    context.event = Event.objects.create(
-        event_type=event_type,
-        source_service="core",
-        entity_type="deal",
-        entity_id="00000000-0000-0000-0000-000000000001",
-        after_state={"stage": "qualified"},
-    )
+    store_entity_on_context(context, "workflow", workflow)
+
+    event = getattr(context, "event", None)
+    if event is not None:
+        event = getattr(event, "latest", event)
+    if event is None:
+        event = Event.objects.create(
+            event_type=event_type,
+            source_service="core",
+            entity_type="deal",
+            entity_id="00000000-0000-0000-0000-000000000001",
+            after_state={"stage": "qualified"},
+        )
+        store_entity_on_context(context, "event", event)
 
     try:
-        context.execution_log = WorkflowService.execute_workflow(
+        execution_log = WorkflowService.execute_workflow(
             workflow=workflow,
-            event=context.event,
+            event=event,
             triggered_by=getattr(context, "auth_user", None),
         )
+        store_entity_on_context(context, "execution_log", execution_log)
         context.captured_exception = None
     except Exception as exc:  # pylint: disable=broad-exception-caught
         context.execution_log = None

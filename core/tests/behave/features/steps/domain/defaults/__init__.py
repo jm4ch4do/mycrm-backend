@@ -8,6 +8,7 @@ from steps.domain.defaults.call import CallDefaults
 from steps.domain.defaults.contact import ContactDefaults
 from steps.domain.defaults.deal import DealDefaults
 from steps.domain.defaults.event import EventDefaults
+from steps.domain.defaults.execution_log import ExecutionLogDefaults
 from steps.domain.defaults.meeting import MeetingDefaults
 from steps.domain.defaults.note import NoteDefaults
 from steps.domain.defaults.rule import RuleDefaults
@@ -24,6 +25,7 @@ __all__ = [
     "ContactDefaults",
     "DealDefaults",
     "EventDefaults",
+    "ExecutionLogDefaults",
     "MeetingDefaults",
     "NoteDefaults",
     "RuleDefaults",

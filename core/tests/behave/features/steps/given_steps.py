@@ -9,7 +9,12 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from steps.domain.constants import ENTITY_CONFIG
 from steps.domain.defaults import BaseEntityDefaults
-from steps.utils import entity_to_model_name, normalize_entity_name
+from steps.utils import (
+    entity_to_model_name,
+    normalize_entity_name,
+    resolve_table_value,
+    store_entity_on_context,
+)
 from steps.domain.user_steps import create_users_from_table
 
 user_model = get_user_model()
@@ -124,7 +129,10 @@ def step_create_entity_directly(context, entity):
     }
 
     for row in context.table:
-        data = {key: value for key, value in row.items()}
+        data = {
+            key: resolve_table_value(value, context) for key, value in row.items()
+        }
+        row_tid = data.pop("_tid", None)
         data = BaseEntityDefaults.resolve_foreign_key_references(data)
 
         # Convert string boolean values to actual booleans
@@ -154,8 +162,8 @@ def step_create_entity_directly(context, entity):
             obj = model.objects.create(**data)
 
         label = list(row.as_dict().values())[0]
+        store_entity_on_context(context, entity_lower, obj, tid=row_tid)
         setattr(context, label, obj)
-        setattr(context, entity_lower, obj)
 
         dict_attr = f"named_{entity_lower}s"
         if not hasattr(context, dict_attr):
@@ -298,7 +306,10 @@ def step_create_entities(context, entity):
 
     for row in context.table:
         # Apply defaults to row data
-        row_data = {key: value for key, value in row.items()}
+        row_data = {
+            key: resolve_table_value(value, context) for key, value in row.items()
+        }
+        row_tid = row_data.pop("_tid", None)
         complete_data = defaults_class.prepare_entity_data(row_data)
         owner_username = complete_data.pop("owner_username", None)
         author_username = complete_data.pop("author_username", None)
@@ -327,11 +338,14 @@ def step_create_entities(context, entity):
         created_list.append(created_obj)
         context.response = response
         context.response_data = created_obj
-        
-        # Store the last created object as singular attribute (e.g., context.account)
-        # This allows URL placeholders like {account.id} to work
-        entity_singular = entity.rstrip('s')  # Simple pluralization removal
-        setattr(context, entity_singular, SimpleNamespace(**created_obj))
+
+        entity_singular = entity.rstrip("s")
+        store_entity_on_context(
+            context,
+            entity_singular,
+            SimpleNamespace(**created_obj),
+            tid=row_tid,
+        )
 
     context.response = response
     context.response_data = created_obj
@@ -383,6 +397,7 @@ def step_generate_multiple_entities(context, count, entity, field=None, value=No
         row_data = {}
         if field:
             row_data[field] = value
+        row_tid = row_data.pop("_tid", None)
         complete_data = defaults_class.prepare_entity_data(row_data)
         complete_data.pop("owner_username", None)
         complete_data.pop("author_username", None)
@@ -397,7 +412,15 @@ def step_generate_multiple_entities(context, count, entity, field=None, value=No
         assert (
             response.status_code == 201
         ), f"Failed to create {entity}: {response.content}"
-        created_list.append(response.json())
+        created_obj = response.json()
+        created_list.append(created_obj)
+        entity_singular = entity.rstrip("s")
+        store_entity_on_context(
+            context,
+            entity_singular,
+            SimpleNamespace(**created_obj),
+            tid=row_tid,
+        )
 
     context.response = response
 

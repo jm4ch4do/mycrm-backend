@@ -11,6 +11,7 @@ from steps.utils import (
     entity_to_model_name,
     normalize_entity_name,
     resolve_foreign_key_pattern,
+    resolve_table_value,
 )
 
 # ---------------------------------------------------------------------------
@@ -59,6 +60,7 @@ def step_send_request_to_endpoint(context, method, endpoint):
             for row in context.table:
                 field = row["field"]
                 value = _sutils.resolve_url_placeholders(row["value"], context)
+                value = resolve_table_value(value, context)
                 # Try to parse JSON values (objects, arrays, booleans, null)
                 if value.startswith('{') or value.startswith('[') or value.lower() in ('true', 'false', 'null'):
                     try:
@@ -200,6 +202,10 @@ def step_update_entity(context, entity, field, value):
 
     instance = model.objects.get(**{field: value})
     update_data = dict(context.table[0].items())
+    for key, raw_value in list(update_data.items()):
+        update_data[key] = resolve_table_value(
+            _sutils.resolve_url_placeholders(raw_value, context), context
+        )
 
     response = context.client.patch(
         f"{endpoint}{instance.id}/",

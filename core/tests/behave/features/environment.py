@@ -18,6 +18,7 @@ from core.models import (
     Deal,
     DealContactAssoc,
     Event,
+    ExecutionLog,
     Rule,
     Task,
     Workflow,
@@ -49,6 +50,7 @@ def clear_test_data():
     DealContactAssoc.objects.all().delete()
     Deal.objects.all().delete()
     Contact.objects.all().delete()
+    ExecutionLog.objects.all().delete()
     Event.objects.all().delete()
     Rule.objects.all().delete()
     WorkflowStep.objects.all().delete()
@@ -67,6 +69,7 @@ def clear_test_data():
             "Contact",
             "Deal",
             "DealContactAssoc",
+            "ExecutionLog",
             "Event",
             "Rule",
             "Task",

@@ -2,6 +2,7 @@
 
 import json
 import re
+from types import SimpleNamespace
 from urllib.parse import urlencode
 from django.apps import apps
 from django.contrib.auth import get_user_model
@@ -9,7 +10,24 @@ from django.contrib.auth import get_user_model
 # Maps plural entity names to their Django model class names (irregular plurals).
 SINGULAR_MAP = {
     "activities": "Activity",
+    "execution_logs": "ExecutionLog",
 }
+
+
+class EntityContext(SimpleNamespace):
+    """Namespace that exposes the latest created entity instance."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.latest = None
+
+    def __getattr__(self, attr):
+        latest = self.__dict__.get("latest")
+        if latest is not None:
+            return getattr(latest, attr)
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
 
 
 def entity_to_model_name(entity_name):
@@ -26,6 +44,63 @@ def resolve_model(entity_name):
     if name.lower() == "user":
         return get_user_model()
     return apps.get_model("core", name)
+
+
+def ensure_entity_context(context, entity_name):
+    """Return the context namespace used to store created entity instances."""
+    existing = getattr(context, entity_name, None)
+    if isinstance(existing, EntityContext):
+        return existing
+
+    entity_context = EntityContext()
+    if existing is not None:
+        entity_context.latest = existing
+    setattr(context, entity_name, entity_context)
+    return entity_context
+
+
+def store_entity_on_context(context, entity_name, entity, tid=None):
+    """Store an entity under ``context.<entity_name>`` and optional test id."""
+    entity_context = ensure_entity_context(context, entity_name)
+    entity_context.latest = entity
+    if tid:
+        setattr(entity_context, tid, entity)
+    return entity_context
+
+
+def resolve_context_reference(value, context):
+    """Resolve ``@entity.attr`` references against behave context objects.
+
+    If the resolved target is an object instance and no explicit field is
+    provided (e.g. ``@event.e1``), this returns the object's ``id`` when
+    available.
+    """
+    if not isinstance(value, str) or not value.startswith("@"):
+        return value
+
+    parts = value[1:].split(".")
+    target = context
+    for part in parts:
+        target = getattr(target, part)
+
+    # If reference stops at @entity.tid, default to that object's id.
+    if len(parts) == 2 and hasattr(target, "id"):
+        return str(target.id)
+
+    if hasattr(target, "id") and len(parts) > 2:
+        return str(target)
+
+    if hasattr(target, "id"):
+        return str(target.id)
+    return target
+
+
+def resolve_table_value(value, context):
+    """Resolve table cell values that may reference context objects."""
+    if isinstance(value, str):
+        value = resolve_url_placeholders(value, context)
+        return resolve_context_reference(value, context)
+    return value
 
 
 # Special pluralization rules for entity names (irregular plurals).
@@ -155,8 +230,12 @@ def resolve_url_placeholders(endpoint, context):
         obj = getattr(context, name)
         return str(getattr(obj, attr))
 
+    def _replace_context_ref(match):
+        return str(resolve_context_reference(match.group(0), context))
+
     # Matches both {context.varname.attr} and legacy {varname.attr}
-    return re.sub(r"\{(?:context\.)?([^.}]+)\.([^}]+)\}", _replace, endpoint)
+    endpoint = re.sub(r"\{(?:context\.)?([^.}]+)\.([^}]+)\}", _replace, endpoint)
+    return re.sub(r"@([A-Za-z_][\w]*(?:\.[A-Za-z_][\w]*)+)", _replace_context_ref, endpoint)
 
 
 def build_url_with_query_params(endpoint, context):
@@ -183,7 +262,8 @@ def build_url_with_query_params(endpoint, context):
         for row in context.table:
             field = row["field"]
             operator = row.get("operator", "eq").lower()
-            value = row["value"]
+            value = resolve_url_placeholders(row["value"], context)
+            value = resolve_table_value(value, context)
 
             # Build the query parameter key based on operator
             if operator in ("eq", "equals"):

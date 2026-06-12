@@ -8,6 +8,7 @@ Domain step modules that live in steps/domain/ are imported below so their
 
 import steps.domain.action_steps  # noqa: F401
 import steps.domain.contact_steps  # noqa: F401
+import steps.domain.execution_log_steps  # noqa: F401
 import steps.domain.timeline_steps  # noqa: F401
 import steps.domain.user_steps  # noqa: F401
 import steps.domain.workflow_steps  # noqa: F401

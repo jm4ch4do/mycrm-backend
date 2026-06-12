@@ -2,6 +2,8 @@
 
 from django.contrib.auth import get_user_model
 
+from steps.utils import store_entity_on_context
+
 
 def create_users_from_table(context):
     """
@@ -18,12 +20,14 @@ def create_users_from_table(context):
     for row in context.table:
         data = {key: value for key, value in row.items()}
         password = data.pop("password", None)
+        tid = data.pop("_tid", None)
         user = user_model.objects.create(**data)
         if password is not None:
             user.set_password(password)
             user.save(update_fields=["password"])
 
         label = data[context.table.headings[0]]
+        store_entity_on_context(context, "user", user, tid=tid)
         setattr(context, label, user)
         if not hasattr(context, "named_users"):
             context.named_users = {}
